@@ -45,7 +45,7 @@ public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMai
 
   @Override
   public int getItemCount() {
-    return itemList.size();
+    return itemList == null ? 0 : itemList.size();
   }
 
   public class ListItemHolder extends RecyclerView.ViewHolder {
@@ -102,6 +102,10 @@ public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMai
 
   public void setCheckBoxListener(CheckBoxListener checkBoxListener) {
     this.checkBoxListener = checkBoxListener;
+  }
+
+  public ListItem getItemAt(int position) {
+    return itemList.get(position);
   }
 }
 

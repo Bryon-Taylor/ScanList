@@ -13,11 +13,9 @@ import java.util.List;
 public class ListItemViewModel extends AndroidViewModel {
 
   private Repository repository;
-  private LiveData<List<ListItem>> allItems;
 
   public ListItemViewModel(@NonNull Application application) {
     super(application);
-
     repository = new Repository(application);
   }
 
