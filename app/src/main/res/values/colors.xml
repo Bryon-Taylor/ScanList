@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="colorPrimary">#3CC89F</color>
+  <color name="colorPrimaryDark">#065761</color>
+  <color name="colorAccent">#1E88E5</color>
+
+  <!-- MainActivity -->
+  <color name="hintTextColor">#858585</color>
+  <color name="swipeColor">#E4E4E4</color>
+  <color name="swipeReleased">#FFF</color>
+  <color name="itemviewBackgroundColorDelete">#FF0000</color>
+  <color name="itemViewBackgroundColorEdit">#F4511E</color>
+</resources>

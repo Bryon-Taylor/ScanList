@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/card_view"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:elevation="8dp">
+
+  <!-- FrameLayout allows layouts to be layered.
+       Background layout will show when top layout is swiped -->
+  <FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- background layout -->
+    <RelativeLayout
+      android:id="@+id/background_layout"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="#FF0000">
+
+      <!-- delete icon -->
+      <ImageView
+        android:id="@+id/img_delete_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="0dp"
+        android:src="@drawable/icon_delete_24" />
+
+      <!-- edit icon -->
+      <ImageView
+        android:id="@+id/img_edit_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/icon_edit_24" />
+
+      <!-- delete text -->
+      <TextView
+        android:id="@+id/txt_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/img_delete_icon"
+        android:text="@string/delete"
+        android:textColor="#FFFFFF" />
+
+      <!-- edit text -->
+      <TextView
+        android:id="@+id/txt_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="4dp"
+        android:layout_toLeftOf="@+id/img_edit_icon"
+        android:text="@string/edit"
+        android:textColor="#FFFFFF" />
+
+    </RelativeLayout>
+
+    <!-- foreground layout -->
+    <LinearLayout
+      android:id="@+id/foreground_layout"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:orientation="horizontal"
+      android:background="#FFF">
+
+      <!-- list item name -->
+      <TextView
+        android:id="@+id/txt_item_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="8.8"
+        android:padding="8dp"
+        android:textSize="20sp"
+        android:textColor="#000"/>
+
+      <!-- list item checkbox -->
+      <CheckBox
+        android:id="@+id/checkBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.2"
+        android:layout_gravity="center_vertical"/>
+    </LinearLayout>
+
+  </FrameLayout>
+</androidx.cardview.widget.CardView>

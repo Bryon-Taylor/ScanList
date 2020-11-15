@@ -1,0 +1,9 @@
+<resources>
+  <string name="app_name">ScanList</string>
+
+  <!-- MainActivity -->
+  <string name="add_item">Add item</string>
+  <string name="add_icon">add icon</string>
+  <string name="delete">delete</string>
+  <string name="edit">edit</string>
+</resources>
