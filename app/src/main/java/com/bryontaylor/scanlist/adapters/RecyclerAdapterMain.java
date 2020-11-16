@@ -25,7 +25,7 @@ public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMai
   private CheckBoxListener checkBoxListener;
 
   public interface CheckBoxListener {
-    void onCheckBoxClicked();
+    void onCheckBoxClicked(ListItem item);
   }
 
   @NonNull
@@ -39,8 +39,15 @@ public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMai
 
   @Override
   public void onBindViewHolder(@NonNull ListItemHolder holder, int position) {
-// set the TextView
-    holder.txtItemName.setText(itemList.get(position).getItemName());
+    // set the holder's values
+    ListItem item = itemList.get(position);
+    holder.txtItemName.setText(item.getItemName());
+    holder.checkBox.setChecked(item.getIsChecked());
+    if(item.getIsChecked()) {
+      holder.txtItemName.setTextColor(Color.LTGRAY);
+    } else {
+      holder.txtItemName.setTextColor(Color.BLACK);
+    }
   }
 
   @Override
@@ -66,14 +73,18 @@ public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMai
       checkBox.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-          if(checkBox.isChecked()) {
-            txtItemName.setTextColor(Color.LTGRAY);
-          } else {
-            txtItemName.setTextColor(Color.BLACK);
-          }
+//          if(checkBox.isChecked()) {
+//            txtItemName.setTextColor(Color.LTGRAY);
+//          } else {
+//            txtItemName.setTextColor(Color.BLACK);
+//          }
 
           // TODO: update item in database from MAIN to persist checkbox state, maybe with interface callback in Main?
           Log.i("tag", "checkbox clicked: ");
+          ListItem item = itemList.get(getAdapterPosition());
+          String itemName = item.getItemName();
+          Log.i("tag", itemName + "'s checkbox was clicked");
+          checkBoxListener.onCheckBoxClicked(itemList.get(getAdapterPosition()));
         }
       });
     }
@@ -91,15 +102,7 @@ public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMai
     notifyDataSetChanged();
   }
 
-//  public void setItemListSingleAdd(List<String> itemList) {
-//    this.itemList = itemList;
-//    notifyItemInserted(itemList.size() - 1);
-//  }
-
-//  public String getItemAt(int position) {
-//    return itemList.get(position);
-//  }
-
+  // register MainActivity as a listener
   public void setCheckBoxListener(CheckBoxListener checkBoxListener) {
     this.checkBoxListener = checkBoxListener;
   }

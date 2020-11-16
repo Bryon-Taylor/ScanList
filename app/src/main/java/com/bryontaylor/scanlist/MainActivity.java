@@ -54,6 +54,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       public void onChanged(List<ListItem> listItems) {
         adapterMain.setItemList(listItems);
         Log.i(TAG, "onChanged: called");
+        for(ListItem item : listItems) {
+          Log.i(TAG, "item's isChecked value for : " + item.getItemName() + " " + item.getIsChecked());
+        }
       }
     });
   }
@@ -77,14 +80,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   private void setListeners() {
     imgAddItem.setOnClickListener(this);
-
-    // to respond to checkBox being clicked
-//    adapterMain.setCheckBoxListener(new RecyclerAdapterMain.CheckBoxListener() {
-//      @Override
-//      public void onCheckBoxClicked() {
-//        Log.i(TAG, "onCheckBoxClicked: ");
-//      }
-//    });
+    adapterMain.setCheckBoxListener(new RecyclerAdapterMain.CheckBoxListener() {
+      @Override
+      public void onCheckBoxClicked(ListItem item) {
+        item.setChecked(!item.getIsChecked()); // toggle isChecked value
+        viewModel.update(item);
+        Log.i(TAG, "onCheckBoxClicked: called update(item)");
+      }
+    });
   }
 
   @Override
@@ -238,4 +241,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             .create();
     alert.show();
   }
+
 }

@@ -28,11 +28,11 @@ public class ListItem {
     this.itemName = itemName;
   }
 
-  public boolean isChecked() {
-    return isChecked;
+  public void setChecked(boolean isChecked) {
+    this.isChecked = isChecked;
   }
 
-  public void setChecked(boolean checked) {
-    isChecked = checked;
+  public boolean getIsChecked() {
+    return isChecked;
   }
 }
