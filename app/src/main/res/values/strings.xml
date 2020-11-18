@@ -9,4 +9,7 @@
   <string name="launch_camera">launch camera</string>
   <string name="add_all">Add all</string>
   <string name="done">done</string>
+  <string name="share_list">share list</string>
+  <string name="delete_all_items">delete all items</string>
+  <string name="delete_checked_items">delete checked items</string>
 </resources>

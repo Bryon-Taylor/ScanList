@@ -5,24 +5,23 @@
   <!-- share list -->
   <item
     android:id="@+id/icon_share_list"
-    android:title="share list"
+    android:title="@string/share_list"
     android:icon="@drawable/icon_share_24"
-    app:showAsAction="ifRoom"
-    app:actionProviderClass="androidx.appcompat.widget.ShareActionProvider">
+    app:showAsAction="ifRoom" >
   </item>
 
   <!-- launch camera -->
   <item
     android:id="@+id/icon_launch_camera"
     android:title="@string/launch_camera"
-    android:icon="@drawable/icon_camera_32"
+    android:icon="@drawable/icon_camera_24"
     app:showAsAction="ifRoom">
   </item>
 
   <!-- delete all items -->
   <item
     android:id="@+id/icon_delete_all"
-    android:title="delete all items"
+    android:title="@string/delete_all_items"
     android:icon="@drawable/icon_delete_all_24"
     app:showAsAction="never">
   </item>
@@ -30,7 +29,7 @@
   <!-- delete checked items -->
   <item
     android:id="@+id/icon_delete_checked"
-    android:title="delete checked items"
+    android:title="@string/delete_checked_items"
     android:icon="@drawable/icon_delete_24"
     app:showAsAction="never">
   </item>

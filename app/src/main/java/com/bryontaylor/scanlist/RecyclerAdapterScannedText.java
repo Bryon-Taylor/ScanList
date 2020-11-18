@@ -16,13 +16,13 @@ public class RecyclerAdapterScannedText extends
     RecyclerView.Adapter<RecyclerAdapterScannedText.ScannedTextViewHolder> {
 
   private List<String> scannedLines;
-  private List<String> listAdditions;
+  private List<ImageView> imgAddButtons;
   private OnAddBtnListener listener;
 
   // pass scanned text lines to constructor
   public RecyclerAdapterScannedText(List<String> scannedLines) {
     this.scannedLines = scannedLines;
-    listAdditions = new ArrayList<>();
+    imgAddButtons = new ArrayList<>();
   }
 
   @NonNull
@@ -54,6 +54,7 @@ public class RecyclerAdapterScannedText extends
       edtAddItem = itemView.findViewById(R.id.edt_add_item_scanned);
       imgAddItem = itemView.findViewById(R.id.img_add_item_scanned);
       imgAddItem.setOnClickListener(this);
+      imgAddButtons.add(imgAddItem);
     }
 
     // if user clicks the add item button, get the current value in case user modified it
@@ -79,10 +80,11 @@ public class RecyclerAdapterScannedText extends
   }
 
   // get all CURRENT values of the EditTexts in case user modified them
-  private void getEditTextsCurrentValue() {
-    for(int i = 0; i < scannedLines.size(); i++) {
-      // i need the edittext value at i
+  public void addAllItems() {
 
+    // fires the onClick method for all buttons and adds all items
+    for(ImageView imgAddButton : imgAddButtons) {
+      imgAddButton.performClick();
     }
   }
 }

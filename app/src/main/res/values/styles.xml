@@ -11,8 +11,6 @@
 
     <item name="colorControlNormal">#000</item>
 
-    <!-- set the share icon in the toolbar from default TODO not working -->
-    <item name="actionModeShareDrawable">@drawable/icon_share_24</item>
   </style>
 
 

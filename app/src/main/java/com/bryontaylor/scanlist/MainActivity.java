@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private RecyclerAdapterMain adapterMain;
   private ListItemViewModel viewModel;
   private ConstraintLayout constraintLayout;
+  private List<ListItem> itemList;
   private static final String TAG = "MainActivity";
 
   // for image capture from camera
@@ -91,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   private void initComponents() {
+    itemList = new ArrayList<>();
     imgAddItem = findViewById(R.id.img_add_item_main);
     edtAddItem = findViewById(R.id.edt_add_item_main);
     viewModel = ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())
@@ -304,6 +306,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       case R.id.icon_delete_checked:
         viewModel.deleteCheckedItems();
         break;
+      case R.id.icon_share_list:
+        showShareIntent();
+        break;
     }
     return true;
   }
@@ -432,5 +437,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         e.printStackTrace();
       }
     });
+  }
+
+  // Share the list
+  private void showShareIntent() {
+    String sharedItems = getItemsToShare();
+    Intent i = new Intent();
+    i.setAction(Intent.ACTION_SEND);
+    i.setType("text/plain");
+    i.putExtra(Intent.EXTRA_SUBJECT, "subject");
+    i.putExtra(Intent.EXTRA_TEXT, sharedItems);
+    startActivity(Intent.createChooser(i, "share list"));
+  }
+
+  private String getItemsToShare() {
+    itemList = adapterMain.getItemList();
+    String sharedItems = "";
+    for(ListItem item : itemList) {
+      sharedItems += item.getItemName() + "\n";
+    }
+    // don't maintain ListItem objects in memory
+    itemList.clear();
+    return sharedItems;
   }
 }

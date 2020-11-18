@@ -92,5 +92,6 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
 
   public void addAllItems() {
     // get value of each EditText and add to list...........How?
+    scannedTextAdapter.addAllItems();
   }
 }
