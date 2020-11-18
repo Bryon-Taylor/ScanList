@@ -69,16 +69,17 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:orientation="horizontal"
-      android:background="#FFF">
+      android:background="@color/recyclerview_holder_color">
 
       <!-- list item name -->
       <TextView
         android:id="@+id/txt_item_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="8.8"
-        android:padding="8dp"
-        android:textSize="20sp"
+        android:layout_weight="9.2"
+        android:padding="6dp"
+        android:paddingStart="2dp"
+        android:textSize="24sp"
         android:textColor="#000"/>
 
       <!-- list item checkbox -->
@@ -86,7 +87,7 @@
         android:id="@+id/checkBox"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1.2"
+        android:layout_weight=".8"
         android:layout_gravity="center_vertical"/>
     </LinearLayout>
 

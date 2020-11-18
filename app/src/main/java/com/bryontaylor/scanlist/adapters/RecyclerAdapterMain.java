@@ -22,8 +22,9 @@ public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMai
 
   //private List<String> itemList;
   private List<ListItem> itemList;
-  private CheckBoxListener checkBoxListener;
 
+  // registers MainActivity as a listener to checkbox clicks. Main will update database accordingly.
+  private CheckBoxListener checkBoxListener;
   public interface CheckBoxListener {
     void onCheckBoxClicked(ListItem item);
   }

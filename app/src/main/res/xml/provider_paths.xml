@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- to access the phone's cache directory, this is referenced in the manifest file -->
+<paths>
+  <cache-path name="external_files" path="."/>
+</paths>

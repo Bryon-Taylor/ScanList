@@ -23,11 +23,15 @@ public interface ListItemDao {
   @Delete
   void delete(ListItem item);
 
-  // delete all items
-  @Query("DELETE FROM list_item_table")
-  void deleteAll();
-
   // get all Items
   @Query("SELECT * FROM list_item_table")
   LiveData<List<ListItem>> getAllItems();
+
+  // delete all items
+  @Query("DELETE FROM list_item_table")
+  void deleteAllItems();
+
+  // delete all items whose checkbox is checked
+  @Query("DELETE FROM list_item_table WHERE isChecked = 1")
+  void deleteCheckedItems();
 }

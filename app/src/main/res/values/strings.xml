@@ -6,4 +6,7 @@
   <string name="add_icon">add icon</string>
   <string name="delete">delete</string>
   <string name="edit">edit</string>
+  <string name="launch_camera">launch camera</string>
+  <string name="add_all">Add all</string>
+  <string name="done">done</string>
 </resources>

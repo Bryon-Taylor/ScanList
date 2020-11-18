@@ -35,11 +35,15 @@ public class Repository {
     executorSvc.execute(() -> listItemDao.delete(item));
   }
 
-  public void deleteAll() {
-    executorSvc.execute(() -> listItemDao.deleteAll());
-  }
-
   public LiveData<List<ListItem>> getAllItems() {
     return listItemDao.getAllItems();
+  }
+
+  public void deleteAllItems() {
+    executorSvc.execute(() -> listItemDao.deleteAllItems());
+  }
+
+  public void deleteCheckedItems() {
+    executorSvc.execute(() -> listItemDao.deleteCheckedItems());
   }
 }

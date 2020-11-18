@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto">
+
+  <!-- share list -->
+  <item
+    android:id="@+id/icon_share_list"
+    android:title="share list"
+    android:icon="@drawable/icon_share_24"
+    app:showAsAction="ifRoom"
+    app:actionProviderClass="androidx.appcompat.widget.ShareActionProvider">
+  </item>
+
+  <!-- launch camera -->
+  <item
+    android:id="@+id/icon_launch_camera"
+    android:title="@string/launch_camera"
+    android:icon="@drawable/icon_camera_32"
+    app:showAsAction="ifRoom">
+  </item>
+
+  <!-- delete all items -->
+  <item
+    android:id="@+id/icon_delete_all"
+    android:title="delete all items"
+    android:icon="@drawable/icon_delete_all_24"
+    app:showAsAction="never">
+  </item>
+
+  <!-- delete checked items -->
+  <item
+    android:id="@+id/icon_delete_checked"
+    android:title="delete checked items"
+    android:icon="@drawable/icon_delete_24"
+    app:showAsAction="never">
+  </item>
+
+
+</menu>

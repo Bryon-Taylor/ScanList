@@ -31,11 +31,15 @@ public class ListItemViewModel extends AndroidViewModel {
     repository.delete(item);
   }
 
-  public void deleteAll() {
-    repository.deleteAll();
-  }
-
   public LiveData<List<ListItem>> getAllItems() {
     return repository.getAllItems();
+  }
+
+  public void deleteAllItems() {
+    repository.deleteAllItems();
+  }
+
+  public void deleteCheckedItems() {
+    repository.deleteCheckedItems();
   }
 }
