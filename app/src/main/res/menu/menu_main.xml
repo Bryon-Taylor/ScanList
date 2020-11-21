@@ -2,20 +2,20 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto">
 
-  <!-- share list -->
-  <item
-    android:id="@+id/icon_share_list"
-    android:title="@string/share_list"
-    android:icon="@drawable/icon_share_24"
-    app:showAsAction="ifRoom" >
-  </item>
-
   <!-- launch camera -->
   <item
     android:id="@+id/icon_launch_camera"
     android:title="@string/launch_camera"
     android:icon="@drawable/icon_camera_24"
-    app:showAsAction="ifRoom">
+    app:showAsAction="always">
+  </item>
+
+  <!-- share list -->
+  <item
+    android:id="@+id/icon_share_list"
+    android:title="@string/share_list"
+    android:icon="@drawable/icon_share_24"
+    app:showAsAction="always" >
   </item>
 
   <!-- delete all items -->

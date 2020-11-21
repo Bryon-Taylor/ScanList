@@ -8,23 +8,37 @@
   android:layout_height="match_parent"
   tools:context=".MainActivity" >
 
-<!--  <androidx.appcompat.widget.Toolbar-->
-<!--    android:id="@+id/toolbar_main"-->
-<!--    android:layout_width="match_parent"-->
-<!--    android:layout_height="?attr/actionBarSize"-->
-<!--    android:background="@color/toolbarColor"-->
-<!--    android:contentInsetStart="0dp"-->
-<!--    android:contentInsetLeft="0dp"-->
-<!--    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"-->
-<!--    app:contentInsetLeft="0dp"-->
-<!--    app:contentInsetStart="0dp"-->
-<!--    app:layout_constraintBottom_toBottomOf="parent"-->
-<!--    app:layout_constraintEnd_toEndOf="parent"-->
-<!--    app:layout_constraintStart_toStartOf="parent"-->
-<!--    app:layout_constraintTop_toTopOf="parent"-->
-<!--    app:layout_constraintVertical_bias="0.0" >-->
+  <!-- This toolbar shares space with onCreateOptionsMenu. The voice recognizer icon needs an
+       OnTouchListener which is not available in onOptionsItemSelected method. -->
+  <androidx.appcompat.widget.Toolbar
+    android:id="@+id/toolbar_main"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:background="@color/toolbarColor"
+    android:contentInsetStart="0dp"
+    android:contentInsetLeft="0dp"
+    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+    app:contentInsetLeft="0dp"
+    app:contentInsetStart="0dp"
+    android:paddingStart="10dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintVertical_bias="0.0" >
 
-    <!-- To insert a single list item from MainActivity -->
+        <!-- voice recognizer icon in toolbar -->
+        <ImageView
+          android:id="@+id/img_voice_recognizer"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:src="@drawable/icon_mic_24"
+          android:layout_gravity="end"
+          android:layout_marginEnd="10dp"/>
+
+  </androidx.appcompat.widget.Toolbar>
+
+  <!-- To insert a single list item from MainActivity -->
   <EditText
     android:id="@+id/edt_add_item_main"
     android:layout_width="match_parent"
@@ -33,18 +47,17 @@
     android:hint="@string/add_item"
     android:imeOptions="flagNoExtractUi"
     android:inputType="text"
-    android:padding="8dp"
+    android:padding="10dp"
     android:textColor="#000"
-    android:textSize="24sp"
+    android:textSize="20sp"
     android:textColorHint="@color/hintTextColor"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/toolbar_main"
     app:layout_constraintVertical_bias="0.0"
     tools:ignore="Autofill" />
 
-<!--  </androidx.appcompat.widget.Toolbar>-->
 
   <!-- "Button" to add a single item from MainActivity -->
   <ImageView

@@ -1,18 +1,25 @@
 package com.bryontaylor.scanlist;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -22,7 +29,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -47,6 +57,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -56,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private RecyclerAdapterMain adapterMain;
   private ListItemViewModel viewModel;
   private ConstraintLayout constraintLayout;
-  private List<ListItem> itemList;
+  private Toolbar toolbar;
   private static final String TAG = "MainActivity";
 
   // for image capture from camera
@@ -66,16 +77,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private final int REQUEST_CODE_SCANNED_LINES = 2000;
   private Bitmap bitmap;
 
+  // for voice recognition
+  private static final int REQUEST_CODE_VOICE_RECOGNITION = 3000;
+  private boolean permissionGranted = false;
+  private ImageView imgVoiceRecognizer;
+  private SpeechRecognizer speechRecognizer;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
+    initToolbar();
     initComponents();
     initRecyclerView();
     setListeners();
     setListObserver();
     createItemTouchHelper();
+  }
+
+  // initialize toolbar - shares space with onCreateOptionsMenu
+  private void initToolbar() {
+    toolbar = findViewById(R.id.toolbar_main);
+    setSupportActionBar(toolbar);
+    setTitle("ScanList");
   }
 
   private void setListObserver() {
@@ -92,12 +117,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   private void initComponents() {
-    itemList = new ArrayList<>();
     imgAddItem = findViewById(R.id.img_add_item_main);
     edtAddItem = findViewById(R.id.edt_add_item_main);
     viewModel = ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())
         .create(ListItemViewModel.class);
     constraintLayout = findViewById(R.id.constraint_layout);
+    imgVoiceRecognizer = findViewById(R.id.img_voice_recognizer);
+    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
   }
 
   private void initRecyclerView() {
@@ -119,6 +145,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.i(TAG, "onCheckBoxClicked: called update(item)");
       }
     });
+
+    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+
+    startSpeechRecognizer();
   }
 
   @Override
@@ -131,7 +163,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           item.setItemName(itemName);
           viewModel.insert(item);
         }
-        edtAddItem.setText(""); // clear the EditText field
+
+        // clear EditText and resent hint
+        edtAddItem.setText("");
+        edtAddItem.setHint("Add item");
     }
   }
 
@@ -297,9 +332,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   @Override
   public boolean onOptionsItemSelected(@NonNull MenuItem item) {
     switch(item.getItemId()) {
-      case R.id.icon_launch_camera:
-        launchCamera();
-        break;
+
       case R.id.icon_delete_all:
         viewModel.deleteAllItems();
         break;
@@ -309,8 +342,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       case R.id.icon_share_list:
         showShareIntent();
         break;
+      case R.id.icon_launch_camera:
+        launchCamera();
+        break;
+
+//      case R.id.icon_voice_recognition:
+//        if(!permissionGranted) {
+//          requestPermission();
+//          if(permissionGranted) {
+//            startSpeechRecognizer();
+//          }
+//        } else {
+//          startSpeechRecognizer();
+//
+//        }
+//        break;
     }
-    return true;
+    return super.onOptionsItemSelected(item);
   }
 
   // launches the phone's camera and stores the image in a temporary file in the phone's cache
@@ -375,7 +423,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         e.printStackTrace();
       }
 
-      // get the list of added items back from ScannedTextActivity
+      // get the list of added items back from ScannedTextActivity and insert into database
     } else if (requestCode == REQUEST_CODE_SCANNED_LINES && resultCode == RESULT_OK) {
       ArrayList<String> resultsList = intent.getStringArrayListExtra("addedItemsList");
       for(String itemName : resultsList) {
@@ -439,25 +487,114 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     });
   }
 
-  // Share the list
+  // Share the list via an intent
   private void showShareIntent() {
     String sharedItems = getItemsToShare();
     Intent i = new Intent();
     i.setAction(Intent.ACTION_SEND);
     i.setType("text/plain");
-    i.putExtra(Intent.EXTRA_SUBJECT, "subject");
     i.putExtra(Intent.EXTRA_TEXT, sharedItems);
     startActivity(Intent.createChooser(i, "share list"));
   }
 
+  // get a single String list from ListItem ArrayList to share
   private String getItemsToShare() {
+    List<ListItem> itemList;
     itemList = adapterMain.getItemList();
-    String sharedItems = "";
+    String sharedItems = "\n\n";
     for(ListItem item : itemList) {
       sharedItems += item.getItemName() + "\n";
     }
-    // don't maintain ListItem objects in memory
-    itemList.clear();
     return sharedItems;
+  }
+
+  private void requestPermission() {
+    if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+        != PackageManager.PERMISSION_GRANTED) {
+      // API level 23, Marshmallow
+      if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        ActivityCompat.requestPermissions(this,
+            new String[] {Manifest.permission.RECORD_AUDIO}, REQUEST_CODE_VOICE_RECOGNITION);
+      }
+    }
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                         @NonNull int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    if(requestCode == REQUEST_CODE_VOICE_RECOGNITION && grantResults.length > 0) {
+      if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        permissionGranted = true;
+      }
+    }
+  }
+
+  @SuppressLint("ClickableViewAccessibility")
+  private void startSpeechRecognizer() {
+    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+    imgVoiceRecognizer.setOnTouchListener(new View.OnTouchListener() {
+      @Override
+      public boolean onTouch(View v, MotionEvent event) {
+        if(event.getAction() == MotionEvent.ACTION_DOWN) {
+          imgVoiceRecognizer.setImageResource(R.drawable.icon_mic_pressed_24);
+          speechRecognizer.startListening(intent);
+        } else if (event.getAction() == MotionEvent.ACTION_UP) {
+          imgVoiceRecognizer.setImageResource(R.drawable.icon_mic_24);
+          speechRecognizer.stopListening();
+        }
+        return true;
+      }
+    });
+
+    speechRecognizer.setRecognitionListener(new RecognitionListener() {
+      @Override
+      public void onReadyForSpeech(Bundle params) {
+
+      }
+
+      @Override
+      public void onBeginningOfSpeech() {
+        edtAddItem.setText("");
+        edtAddItem.setHint("Talk to input items");  // use String resource
+      }
+
+      @Override
+      public void onRmsChanged(float rmsdB) {
+
+      }
+
+      @Override
+      public void onBufferReceived(byte[] buffer) {
+
+      }
+
+      @Override
+      public void onEndOfSpeech() {
+
+      }
+
+      @Override
+      public void onError(int error) {
+
+      }
+
+      @Override
+      public void onResults(Bundle results) {
+        List<String> voiceResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        edtAddItem.setText(voiceResults.get(0));
+      }
+
+      @Override
+      public void onPartialResults(Bundle partialResults) {
+
+      }
+
+      @Override
+      public void onEvent(int eventType, Bundle params) {
+      }
+    });
   }
 }

@@ -12,4 +12,5 @@
   <string name="share_list">share list</string>
   <string name="delete_all_items">delete all items</string>
   <string name="delete_checked_items">delete checked items</string>
+  <string name="voice_recognition">voice recognition</string>
 </resources>

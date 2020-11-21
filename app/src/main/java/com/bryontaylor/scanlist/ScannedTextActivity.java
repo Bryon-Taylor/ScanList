@@ -73,8 +73,7 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
   public void onClick(View view) {
     switch(view.getId()) {
       case R.id.btn_add_all:
-        // addedItemsList.addAll(scannedLines); need to get current state of EditText in case user changed
-        addAllItems();
+        scannedTextAdapter.addAllItems();
         returnListAndFinish();
 
       case R.id.btn_done:
@@ -88,10 +87,5 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
     i.putStringArrayListExtra("addedItemsList", addedItemsList);
     setResult(RESULT_OK, i);
     finish();
-  }
-
-  public void addAllItems() {
-    // get value of each EditText and add to list...........How?
-    scannedTextAdapter.addAllItems();
   }
 }
