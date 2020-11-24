@@ -19,7 +19,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -79,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   // for voice recognition
   private static final int REQUEST_CODE_VOICE_RECOGNITION = 3000;
-  private boolean permissionGranted = false;
+  private boolean permissionGranted;
   private ImageView imgVoiceRecognizer;
   private SpeechRecognizer speechRecognizer;
 
@@ -88,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    initToolbar();
     initComponents();
     initRecyclerView();
     setListeners();
@@ -96,22 +94,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     createItemTouchHelper();
   }
 
-  // initialize toolbar - shares space with onCreateOptionsMenu
-  private void initToolbar() {
-    toolbar = findViewById(R.id.toolbar_main);
-    setSupportActionBar(toolbar);
-    setTitle("ScanList");
-  }
-
   private void setListObserver() {
     viewModel.getAllItems().observe(this, new Observer<List<ListItem>>() {
       @Override
       public void onChanged(List<ListItem> listItems) {
         adapterMain.setItemList(listItems);
-        Log.i(TAG, "onChanged: called");
-        for (ListItem item : listItems) {
-          Log.i(TAG, "item's isChecked value for : " + item.getItemName() + " " + item.getIsChecked());
-        }
       }
     });
   }
@@ -119,10 +106,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private void initComponents() {
     imgAddItem = findViewById(R.id.img_add_item_main);
     edtAddItem = findViewById(R.id.edt_add_item_main);
-    viewModel = ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())
-        .create(ListItemViewModel.class);
+    viewModel = ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()).create(ListItemViewModel.class);
     constraintLayout = findViewById(R.id.constraint_layout);
-    imgVoiceRecognizer = findViewById(R.id.img_voice_recognizer);
     speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
   }
 
@@ -145,12 +130,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.i(TAG, "onCheckBoxClicked: called update(item)");
       }
     });
-
-    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-
-    startSpeechRecognizer();
   }
 
   @Override
@@ -201,44 +180,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
           // change the item view's color to indicate it is being swiped
           if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-            viewHolder.itemView.findViewById(R.id.foreground_layout)
-                .setBackgroundColor(getResources()
-                    .getColor(R.color.swipeColor, null));
+            viewHolder.itemView.findViewById(R.id.foreground_layout).setBackgroundColor(getResources().getColor(R.color.swipeColor, null));
+            // TODO: change text color
           }
         }
       }
 
       @Override
-      public void clearView(@NonNull RecyclerView recyclerView,
-                            @NonNull RecyclerView.ViewHolder viewHolder) {
+      public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
 
         // bring foreground layer back on top when delete operation is undone
-        final View foregroundLayout = ((RecyclerAdapterMain.ListItemHolder) viewHolder)
-            .getForegroundLayout();
+        final View foregroundLayout = ((RecyclerAdapterMain.ListItemHolder) viewHolder).getForegroundLayout();
         getDefaultUIUtil().clearView(foregroundLayout);
 
         // change back to original white color when swipe is released
-        viewHolder.itemView.findViewById(R.id.foreground_layout)
-            .setBackgroundColor(getResources().getColor(R.color.swipeReleased, null));
+        viewHolder.itemView.findViewById(R.id.foreground_layout).setBackgroundColor(getResources().getColor(R.color.swipeReleased, null));
       }
 
       @Override
-      public void onChildDraw(@NonNull Canvas canvas, @NonNull RecyclerView recyclerView,
-                              @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
-                              int actionState, boolean isCurrentlyActive) {
+      public void onChildDraw(@NonNull Canvas canvas, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
 
           // use getDefaultUIUtil to have background stay stationary while foreground is swiped
-          final View foregroundLayout = ((RecyclerAdapterMain.ListItemHolder) viewHolder)
-              .getForegroundLayout();
-          getDefaultUIUtil().onDraw(canvas, recyclerView, foregroundLayout, dX, dY,
-              actionState, isCurrentlyActive);
+          final View foregroundLayout = ((RecyclerAdapterMain.ListItemHolder) viewHolder).getForegroundLayout();
+          getDefaultUIUtil().onDraw(canvas, recyclerView, foregroundLayout, dX, dY, actionState, isCurrentlyActive);
 
           if (dX > 0) { // if swiped right to delete
             // change background to red
-            viewHolder.itemView.findViewById(R.id.background_layout)
-                .setBackgroundColor(getResources()
-                    .getColor(R.color.itemviewBackgroundColorDelete, null));
+            viewHolder.itemView.findViewById(R.id.background_layout).setBackgroundColor(getResources().getColor(R.color.itemviewBackgroundColorDelete, null));
 
             // hide edit icon and edit text after 3/4 swipe to delete
             if (dX > 0.75) {
@@ -253,9 +222,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           } else if (dX < 0) { // user swiped left to edit
 
             // change background color to orange
-            viewHolder.itemView.findViewById(R.id.background_layout)
-                .setBackgroundColor(getResources()
-                    .getColor(R.color.itemViewBackgroundColorEdit, null));
+            viewHolder.itemView.findViewById(R.id.background_layout).setBackgroundColor(getResources().getColor(R.color.itemViewBackgroundColorEdit, null));
 
             // hide delete icon and text after 3/4 swipe to edit
             if (dX < -0.75) {
@@ -271,9 +238,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       }
 
       @Override
-      public boolean onMove(@NonNull RecyclerView recyclerView,
-                            @NonNull RecyclerView.ViewHolder viewHolder,
-                            @NonNull RecyclerView.ViewHolder target) {
+      public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
         // drag and drop not used
         return false;
       }
@@ -282,8 +247,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   // to undo a delete operation
   public void showUndoSnackBar(ListItem deletedItem) {
-    Snackbar undoSnackBar = Snackbar.make(constraintLayout, "Undo deleted Item",
-        Snackbar.LENGTH_LONG).setAction("UNDO", new View.OnClickListener() {
+    Snackbar undoSnackBar = Snackbar.make(constraintLayout, "Undo deleted Item", Snackbar.LENGTH_LONG).setAction("UNDO", new View.OnClickListener() {
       @Override
       public void onClick(View v) {
         // restore deleted item to its original position in the list
@@ -295,7 +259,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   // edit a swiped list item
   private void showEditItemAlert(ListItem listItem) {
-
     // set the EditText with the previous value and highlight all
     EditText edtItemName = new EditText(this);
     edtItemName.setPadding(30, 100, 0, 30);
@@ -304,9 +267,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     edtItemName.requestFocus();
 
     // create dialog to edit the item
-    AlertDialog alert = new AlertDialog.Builder(MainActivity.this)
-        .setTitle("Edit item").setView(edtItemName)
-        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+    AlertDialog alert = new AlertDialog.Builder(MainActivity.this).setTitle("Edit item").setView(edtItemName).setPositiveButton("OK", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
 
@@ -316,7 +277,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         viewModel.update(listItem);
       }
     }).setNegativeButton("Cancel", null).create();
-
     // display keyboard
     alert.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
     alert.show();
@@ -331,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   @Override
   public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-    switch(item.getItemId()) {
+    switch (item.getItemId()) {
 
       case R.id.icon_delete_all:
         viewModel.deleteAllItems();
@@ -345,20 +305,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       case R.id.icon_launch_camera:
         launchCamera();
         break;
-
-//      case R.id.icon_voice_recognition:
-//        if(!permissionGranted) {
-//          requestPermission();
-//          if(permissionGranted) {
-//            startSpeechRecognizer();
-//          }
-//        } else {
-//          startSpeechRecognizer();
-//
-//        }
-//        break;
-    }
-    return super.onOptionsItemSelected(item);
+      case R.id.icon_voice_recognition:
+        Log.i(TAG, "onOptionsItemSelected: startSpeechRecognizer1");
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        requestPermission();
+      } else {
+        Log.i(TAG, "onOptionsItemSelected: startSpeechRecognizer2");
+        startSpeechRecognizer();
+      }
+        break;
+    } return super.onOptionsItemSelected(item);
   }
 
   // launches the phone's camera and stores the image in a temporary file in the phone's cache
@@ -375,7 +331,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     // Uri will locate image file
-    if(Build.VERSION.SDK_INT > 24) {
+    if (Build.VERSION.SDK_INT > 24) {
       imageUri = FileProvider.getUriForFile(this, AUTHORITY, photoFile);
     } else {
       imageUri = Uri.fromFile(photoFile); // for Android version < 24
@@ -400,7 +356,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ContentResolver contentResolver = this.getContentResolver();
 
     // retrieve the bitmap returned by the photo app
-    if(requestCode == REQUEST_CODE_TAKE_PHOTO && resultCode == RESULT_OK) {
+    if (requestCode == REQUEST_CODE_TAKE_PHOTO && resultCode == RESULT_OK) {
       try {
         bitmap = android.provider.MediaStore.Images.Media.getBitmap(contentResolver, imageUri);
         int width = bitmap.getWidth(); // debugging purposes
@@ -426,7 +382,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       // get the list of added items back from ScannedTextActivity and insert into database
     } else if (requestCode == REQUEST_CODE_SCANNED_LINES && resultCode == RESULT_OK) {
       ArrayList<String> resultsList = intent.getStringArrayListExtra("addedItemsList");
-      for(String itemName : resultsList) {
+      for (String itemName : resultsList) {
         ListItem newItem = new ListItem();
         newItem.setItemName(itemName);
         viewModel.insert(newItem);
@@ -437,12 +393,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   // launch activity to crop image
   // CREDIT: https://github.com/ArthurHub/Android-Image-Cropper library used
   private void launchCropImageActivity() {
-    CropImage.activity(imageUri)
-        .setAllowRotation(false)
-        .setAllowFlipping(false)
-        .setOutputCompressFormat(Bitmap.CompressFormat.JPEG)
-        .setOutputCompressQuality(100)
-        .start(this);
+    CropImage.activity(imageUri).setAllowRotation(false).setAllowFlipping(false).setOutputCompressFormat(Bitmap.CompressFormat.JPEG).setOutputCompressQuality(100).start(this);
   }
 
   // detect text to add to list
@@ -452,8 +403,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // Firebase ML Kit to detect text from images
     FirebaseVisionImage fbVisionImage = FirebaseVisionImage.fromBitmap(bitmap);
-    FirebaseVisionTextRecognizer textRecognizer = FirebaseVision.getInstance()
-        .getOnDeviceTextRecognizer();
+    FirebaseVisionTextRecognizer textRecognizer = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
     Task<FirebaseVisionText> detectTextTask = textRecognizer.processImage(fbVisionImage);
     detectTextTask.addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
       @Override
@@ -464,12 +414,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // text that has enough white space separating them will be captured in different TextBlocks
         // loop through each block to retrieve all lines
         List<FirebaseVisionText.TextBlock> textBlocks = firebaseVisionText.getTextBlocks();
-        for(FirebaseVisionText.TextBlock block : textBlocks) {
+        for (FirebaseVisionText.TextBlock block : textBlocks) {
 
           // text in close proximity will be stored in individual Lines in a list
           // lines are stored in blocks
           List<FirebaseVisionText.Line> lines = block.getLines();
-          for(FirebaseVisionText.Line line : lines) {
+          for (FirebaseVisionText.Line line : lines) {
             scannedLines.add(line.getText());
           }
         }
@@ -502,30 +452,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     List<ListItem> itemList;
     itemList = adapterMain.getItemList();
     String sharedItems = "\n\n";
-    for(ListItem item : itemList) {
+    for (ListItem item : itemList) {
       sharedItems += item.getItemName() + "\n";
     }
     return sharedItems;
   }
 
   private void requestPermission() {
-    if(ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-        != PackageManager.PERMISSION_GRANTED) {
-      // API level 23, Marshmallow
-      if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        ActivityCompat.requestPermissions(this,
-            new String[] {Manifest.permission.RECORD_AUDIO}, REQUEST_CODE_VOICE_RECOGNITION);
-      }
+    // API level 23, Marshmallow
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      ActivityCompat.requestPermissions(this,
+          new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE_VOICE_RECOGNITION);
     }
+
   }
 
   @Override
-  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                         @NonNull int[] grantResults) {
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    if(requestCode == REQUEST_CODE_VOICE_RECOGNITION && grantResults.length > 0) {
-      if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-        permissionGranted = true;
+    if (requestCode == REQUEST_CODE_VOICE_RECOGNITION && grantResults.length > 0) {
+      if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        startSpeechRecognizer();
       }
     }
   }
@@ -535,19 +482,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-    imgVoiceRecognizer.setOnTouchListener(new View.OnTouchListener() {
-      @Override
-      public boolean onTouch(View v, MotionEvent event) {
-        if(event.getAction() == MotionEvent.ACTION_DOWN) {
-          imgVoiceRecognizer.setImageResource(R.drawable.icon_mic_pressed_24);
-          speechRecognizer.startListening(intent);
-        } else if (event.getAction() == MotionEvent.ACTION_UP) {
-          imgVoiceRecognizer.setImageResource(R.drawable.icon_mic_24);
-          speechRecognizer.stopListening();
-        }
-        return true;
-      }
-    });
+    edtAddItem.setText("");
+    edtAddItem.setHint("Talk to input items");  // use String resource
+    speechRecognizer.startListening(intent);
+//    imgVoiceRecognizer.setOnTouchListener(new View.OnTouchListener() {
+//      @Override
+//      public boolean onTouch(View v, MotionEvent event) {
+//        if(event.getAction() == MotionEvent.ACTION_DOWN) {
+//          imgVoiceRecognizer.setImageResource(R.drawable.icon_mic_pressed_24);
+//          speechRecognizer.startListening(intent);
+//        } else if (event.getAction() == MotionEvent.ACTION_UP) {
+//          imgVoiceRecognizer.setImageResource(R.drawable.icon_mic_24);
+//          speechRecognizer.stopListening();
+//        }
+//        return true;
+//      }
+//    });
 
     speechRecognizer.setRecognitionListener(new RecognitionListener() {
       @Override
@@ -557,8 +507,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
       @Override
       public void onBeginningOfSpeech() {
-        edtAddItem.setText("");
-        edtAddItem.setHint("Talk to input items");  // use String resource
+
       }
 
       @Override
@@ -596,5 +545,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       public void onEvent(int eventType, Bundle params) {
       }
     });
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    speechRecognizer.destroy();
   }
 }
