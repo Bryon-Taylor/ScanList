@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private ConstraintLayout constraintLayout;
   private Toolbar toolbar;
   private static final String TAG = "MainActivity";
+  private List<ListItem> oldList;
 
   // for image capture from camera
   private Uri imageUri;
@@ -97,8 +99,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private void setListObserver() {
     viewModel.getAllItems().observe(this, new Observer<List<ListItem>>() {
       @Override
-      public void onChanged(List<ListItem> listItems) {
-        adapterMain.setItemList(listItems);
+      public void onChanged(List<ListItem> newList) {
+
+        adapterMain.submitList(newList);
+//        oldList = adapterMain.getItemList();
+//        if(oldList != null) {
+//          for(ListItem listItem : oldList) {
+//            Log.i(TAG, "onChanged oldList listItemName: " + listItem.getItemName());
+//          }
+//        }
+//
+//        for(ListItem listItem : newList) {
+//          Log.i(TAG, "onChanged newList listItemName: " + listItem.getItemName());
+//        }
+//        adapterMain.setItemList(oldList, newList);
+//        oldList = new ArrayList<>(newList);   // ....................   oldList already updated to newList
+        //adapterMain.submitList(newList);
+//        List<ListItem> oldList = adapterMain.getCurrentList();
+//        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new ListDiffer(oldList, listItems));
+//        diffResult.dispatchUpdatesTo(adapterMain);
+
+
+
       }
     });
   }
@@ -109,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     viewModel = ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()).create(ListItemViewModel.class);
     constraintLayout = findViewById(R.id.constraint_layout);
     speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+    oldList = new ArrayList<>();  // testing purposes
   }
 
   private void initRecyclerView() {
@@ -125,14 +148,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     adapterMain.setCheckBoxListener(new RecyclerAdapterMain.CheckBoxListener() {
       @Override
       public void onCheckBoxClicked(ListItem item) {
-        item.setChecked(!item.getIsChecked()); // toggle isChecked value
-        viewModel.update(item);
-        Log.i(TAG, "onCheckBoxClicked: called update(item)");
+        ListItem newListItem = new ListItem();
+        newListItem.setId(item.getId());
+        newListItem.setItemName(item.getItemName());
+        newListItem.setChecked(!item.getIsChecked()); // toggle isChecked value
+        viewModel.update(newListItem);
+        Log.i(TAG, "onCheckBoxClicked: called update " + item.getItemName());
       }
     });
   }
 
-  @Override
+  @Override // TODO: use if statement instead of switch
   public void onClick(View v) {
     switch (v.getId()) {
       case R.id.img_add_item_main:
@@ -166,11 +192,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           showUndoSnackBar(deletedItem);
         } else {
 
-          // edit item on left swipe
-          showEditItemAlert(adapterMain.getItemAt(position));
+          // edit item on left swipe //
+          showEditItemAlert(viewHolder, position);
 
-          // restores the foreground layer after swiping left to edit and cancelling
-          adapterMain.notifyItemChanged(position);
+          // restores the foreground layer after swiping left to edit and clicking cancel button ------ TODO: get foreground instead
+          //adapterMain.notifyItemChanged(position);
+
         }
       }
 
@@ -179,10 +206,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (viewHolder != null) {
 
           // change the item view's color to indicate it is being swiped
-          if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-            viewHolder.itemView.findViewById(R.id.foreground_layout).setBackgroundColor(getResources().getColor(R.color.swipeColor, null));
-            // TODO: change text color
-          }
+//          if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+//            viewHolder.itemView.findViewById(R.id.foreground_layout).setBackgroundColor(getResources().getColor(R.color.swipeColor, null));
+//            // TODO: change text color
+//          }
         }
       }
 
@@ -194,7 +221,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         getDefaultUIUtil().clearView(foregroundLayout);
 
         // change back to original white color when swipe is released
-        viewHolder.itemView.findViewById(R.id.foreground_layout).setBackgroundColor(getResources().getColor(R.color.swipeReleased, null));
+        //viewHolder.itemView.findViewById(R.id.foreground_layout).setBackgroundColor(getResources().getColor(R.color.swipeReleased, null));
       }
 
       @Override
@@ -207,10 +234,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
           if (dX > 0) { // if swiped right to delete
             // change background to red
-            viewHolder.itemView.findViewById(R.id.background_layout).setBackgroundColor(getResources().getColor(R.color.itemviewBackgroundColorDelete, null));
+            ((RecyclerAdapterMain.ListItemHolder) viewHolder).getBackgroundLayout().setBackgroundColor(getResources().getColor(R.color.itemviewBackgroundColorDelete, null));
 
             // hide edit icon and edit text after 3/4 swipe to delete
-            if (dX > 0.75) {
+            if (dX > 1) {
               viewHolder.itemView.findViewById(R.id.img_edit_icon).setVisibility(View.GONE);
               viewHolder.itemView.findViewById(R.id.txt_edit).setVisibility(View.GONE);
             }
@@ -222,10 +249,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           } else if (dX < 0) { // user swiped left to edit
 
             // change background color to orange
-            viewHolder.itemView.findViewById(R.id.background_layout).setBackgroundColor(getResources().getColor(R.color.itemViewBackgroundColorEdit, null));
+            ((RecyclerAdapterMain.ListItemHolder) viewHolder).getBackgroundLayout().setBackgroundColor(getResources().getColor(R.color.itemViewBackgroundColorEdit, null));
 
             // hide delete icon and text after 3/4 swipe to edit
-            if (dX < -0.75) {
+            if (dX < -1) {
               viewHolder.itemView.findViewById(R.id.img_delete_icon).setVisibility(View.GONE);
               viewHolder.itemView.findViewById(R.id.txt_delete).setVisibility(View.GONE);
             }
@@ -233,6 +260,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             // set edit icon and text visible if they were set to View.GONE
             viewHolder.itemView.findViewById(R.id.txt_edit).setVisibility(View.VISIBLE);
             viewHolder.itemView.findViewById(R.id.img_edit_icon).setVisibility(View.VISIBLE);
+
+            //Log.i(TAG, "dX value: " + dX);
+           //clearView(recyclerMain, viewHolder);
+
+            if(dX < -1400) {
+              //Log.i(TAG, "dX value: " + dX);
+              // cancel swipe
+//              final View backgroundLayout = ((RecyclerAdapterMain.ListItemHolder) viewHolder).getBackgroundLayout();
+//              float backgroundTranslation = backgroundLayout.getTranslationX();
+//              Log.i(TAG, "background translation: " + backgroundTranslation);
+            }
+            //getDefaultUIUtil().clearView(foregroundLayout);
           }
         }
       }
@@ -258,7 +297,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   // edit a swiped list item
-  private void showEditItemAlert(ListItem listItem) {
+  private void showEditItemAlert(RecyclerView.ViewHolder viewHolder, int position) {
+    //List<ListItem> oldList = adapterMain.getCurrentList();
+    ListItem listItem = adapterMain.getItemAt(position);
+    ListItem newListItem = new ListItem();
+    newListItem.setId(listItem.getId());
+
     // set the EditText with the previous value and highlight all
     EditText edtItemName = new EditText(this);
     edtItemName.setPadding(30, 100, 0, 30);
@@ -267,16 +311,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     edtItemName.requestFocus();
 
     // create dialog to edit the item
-    AlertDialog alert = new AlertDialog.Builder(MainActivity.this).setTitle("Edit item").setView(edtItemName).setPositiveButton("OK", new DialogInterface.OnClickListener() {
+    AlertDialog alert = new AlertDialog.Builder(MainActivity.this).setTitle("Edit item")
+        .setView(edtItemName).setPositiveButton("OK", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
 
         // update list with edited value
         String editedItemName = String.valueOf(edtItemName.getText());
-        listItem.setItemName(editedItemName);
-        viewModel.update(listItem);
+        newListItem.setItemName(editedItemName);
+        viewModel.update(newListItem);
+
+//        List<ListItem> itemList = new ArrayList<>(adapterMain.getCurrentList());
+//        ListItem item = itemList.get(position);
+//        item.setItemName(editedItemName);
+//        adapterMain.submitList(itemList);
+        //adapterMain.notifyItemChanged(position);
       }
-    }).setNegativeButton("Cancel", null).create();
+    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        // this restores swiped away foreground layout
+        adapterMain.notifyItemChanged(position);
+      }
+    }).create();
     // display keyboard
     alert.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
     alert.show();
@@ -300,7 +357,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         viewModel.deleteCheckedItems();
         break;
       case R.id.icon_share_list:
-        showShareIntent();
+        try {
+          showShareIntent();
+        } catch (ExecutionException|InterruptedException e) {
+          e.printStackTrace();
+        }
         break;
       case R.id.icon_launch_camera:
         launchCamera();
@@ -438,7 +499,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   // Share the list via an intent
-  private void showShareIntent() {
+  private void showShareIntent() throws ExecutionException, InterruptedException {
     String sharedItems = getItemsToShare();
     Intent i = new Intent();
     i.setAction(Intent.ACTION_SEND);
@@ -448,16 +509,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   // get a single String list from ListItem ArrayList to share
-  private String getItemsToShare() {
-    List<ListItem> itemList;
-    itemList = adapterMain.getItemList();
+  private String getItemsToShare() throws ExecutionException, InterruptedException {
+    // itemList = adapterMain.getItemList();
+    List<String> itemNames = viewModel.getItemNames();
     String sharedItems = "\n\n";
-    for (ListItem item : itemList) {
-      sharedItems += item.getItemName() + "\n";
+    for (String name : itemNames) {
+      sharedItems += name + "\n";
     }
     return sharedItems;
   }
 
+  // request permission to access audio recording feature
   private void requestPermission() {
     // API level 23, Marshmallow
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -485,20 +547,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     edtAddItem.setText("");
     edtAddItem.setHint("Talk to input items");  // use String resource
     speechRecognizer.startListening(intent);
-//    imgVoiceRecognizer.setOnTouchListener(new View.OnTouchListener() {
-//      @Override
-//      public boolean onTouch(View v, MotionEvent event) {
-//        if(event.getAction() == MotionEvent.ACTION_DOWN) {
-//          imgVoiceRecognizer.setImageResource(R.drawable.icon_mic_pressed_24);
-//          speechRecognizer.startListening(intent);
-//        } else if (event.getAction() == MotionEvent.ACTION_UP) {
-//          imgVoiceRecognizer.setImageResource(R.drawable.icon_mic_24);
-//          speechRecognizer.stopListening();
-//        }
-//        return true;
-//      }
-//    });
-
     speechRecognizer.setRecognitionListener(new RecognitionListener() {
       @Override
       public void onReadyForSpeech(Bundle params) {
@@ -532,8 +580,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
       @Override
       public void onResults(Bundle results) {
-        List<String> voiceResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-        edtAddItem.setText(voiceResults.get(0));
+        String voiceResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).get(0);
+        if(voiceResults.toLowerCase().contains("amount")) {
+          Log.i(TAG, "results of voice recognition: contains the word amount!");
+          String[] splitResults = voiceResults.split("amount");
+          String quantity = splitResults[1].trim();
+          quantity = convertQuantity(quantity); // convert for numbers 2 or 4
+
+
+          String resultsWithQtys = quantity + "  " + splitResults[0];
+          edtAddItem.setText(resultsWithQtys);
+        } else {
+          edtAddItem.setText(voiceResults);
+        }
+      }
+
+      private String convertQuantity(String quantity) {
+        switch (quantity) {
+          case "two":
+          case "to":
+          case "too":
+            return "2";
+
+          case "three":
+            return "3";
+
+          case "four":
+          case "for":
+            return "4";
+
+          case "five":
+            return "5";
+
+          case "six":
+            return "6";
+
+          case "seven":
+            return "7";
+          case "ate":
+          case "eight":
+            return "8";
+          case "nine":
+            return "9";
+        }
+        return quantity;
       }
 
       @Override

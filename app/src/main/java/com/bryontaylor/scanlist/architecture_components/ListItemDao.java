@@ -34,4 +34,7 @@ public interface ListItemDao {
   // delete all items whose checkbox is checked
   @Query("DELETE FROM list_item_table WHERE isChecked = 1")
   void deleteCheckedItems();
+
+  @Query("SELECT itemName FROM list_item_table")
+  List<String> getItemNames();
 }

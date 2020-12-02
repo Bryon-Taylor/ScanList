@@ -7,11 +7,14 @@ import androidx.lifecycle.LiveData;
 import com.bryontaylor.scanlist.ListItem;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class Repository {
 
   private ListItemDao listItemDao;
+  private List<String> itemNames;
   private static final String TAG = "Repository";
   //private long id;
 
@@ -45,5 +48,19 @@ public class Repository {
 
   public void deleteCheckedItems() {
     executorSvc.execute(() -> listItemDao.deleteCheckedItems());
+  }
+
+  public List<String> getItemNames() throws ExecutionException, InterruptedException {
+
+    Future<List<String>> future = executorSvc.submit(() -> listItemDao.getItemNames());
+    List<String> itemNames = future.get();
+    return itemNames;
+//    executorSvc.execute(new Runnable() {
+//      @Override
+//      public void run() {
+//        itemNames = listItemDao.getItemNames();
+//      }
+//    });
+//    return itemNames;
   }
 }

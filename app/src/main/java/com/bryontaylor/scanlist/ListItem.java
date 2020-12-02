@@ -1,5 +1,6 @@
 package com.bryontaylor.scanlist;
 
+import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -34,5 +35,9 @@ public class ListItem {
 
   public boolean getIsChecked() {
     return isChecked;
+  }
+
+  public boolean equals(@Nullable ListItem listItem) {
+    return this.itemName.equals(listItem.getItemName()) && this.isChecked == listItem.getIsChecked();
   }
 }

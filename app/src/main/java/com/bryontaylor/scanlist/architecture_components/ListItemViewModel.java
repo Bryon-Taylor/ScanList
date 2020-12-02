@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData;
 import com.bryontaylor.scanlist.ListItem;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class ListItemViewModel extends AndroidViewModel {
 
@@ -41,5 +42,9 @@ public class ListItemViewModel extends AndroidViewModel {
 
   public void deleteCheckedItems() {
     repository.deleteCheckedItems();
+  }
+
+  public List<String> getItemNames() throws ExecutionException, InterruptedException {
+    return repository.getItemNames();
   }
 }
