@@ -15,6 +15,8 @@ import android.provider.MediaStore;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -28,7 +30,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -61,27 +62,24 @@ import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+  // UI, RecyclerView and architecture components
   private ImageView imgAddItem;
   private EditText edtAddItem;
   private RecyclerView recyclerMain;
   private RecyclerAdapterMain adapterMain;
   private ListItemViewModel viewModel;
   private ConstraintLayout constraintLayout;
-  private Toolbar toolbar;
   private static final String TAG = "MainActivity";
-  private List<ListItem> oldList;
 
-  // for image capture from camera
+  // For image capture from camera
   private Uri imageUri;
   private final String AUTHORITY = "com.bryontaylor.scanlist.provider";
   private final int REQUEST_CODE_TAKE_PHOTO = 1000;
   private final int REQUEST_CODE_SCANNED_LINES = 2000;
   private Bitmap bitmap;
 
-  // for voice recognition
+  // For voice recognition
   private static final int REQUEST_CODE_VOICE_RECOGNITION = 3000;
-  private boolean permissionGranted;
-  private ImageView imgVoiceRecognizer;
   private SpeechRecognizer speechRecognizer;
 
   @Override
@@ -96,82 +94,66 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     createItemTouchHelper();
   }
 
+  // LiveData keeps the list current whenever a change in the local database occurs.
   private void setListObserver() {
     viewModel.getAllItems().observe(this, new Observer<List<ListItem>>() {
       @Override
       public void onChanged(List<ListItem> newList) {
-
         adapterMain.submitList(newList);
-//        oldList = adapterMain.getItemList();
-//        if(oldList != null) {
-//          for(ListItem listItem : oldList) {
-//            Log.i(TAG, "onChanged oldList listItemName: " + listItem.getItemName());
-//          }
-//        }
-//
-//        for(ListItem listItem : newList) {
-//          Log.i(TAG, "onChanged newList listItemName: " + listItem.getItemName());
-//        }
-//        adapterMain.setItemList(oldList, newList);
-//        oldList = new ArrayList<>(newList);   // ....................   oldList already updated to newList
-        //adapterMain.submitList(newList);
-//        List<ListItem> oldList = adapterMain.getCurrentList();
-//        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new ListDiffer(oldList, listItems));
-//        diffResult.dispatchUpdatesTo(adapterMain);
-
-
-
       }
     });
   }
 
+  // Initialize components
   private void initComponents() {
     imgAddItem = findViewById(R.id.img_add_item_main);
     edtAddItem = findViewById(R.id.edt_add_item_main);
     viewModel = ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()).create(ListItemViewModel.class);
     constraintLayout = findViewById(R.id.constraint_layout);
     speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-    oldList = new ArrayList<>();  // testing purposes
   }
 
+  // Initialize RecyclerView and Adapter
   private void initRecyclerView() {
     recyclerMain = findViewById(R.id.recycler_main);
     recyclerMain.setLayoutManager(new LinearLayoutManager(this));
     RecyclerView.ItemDecoration vertSpace = new VerticalSpaceDecor(2);
     recyclerMain.addItemDecoration(vertSpace);
     adapterMain = new RecyclerAdapterMain();
+    recyclerMain.setItemAnimator(new MyRecyclerViewAnimator());
     recyclerMain.setAdapter(adapterMain);
   }
 
   private void setListeners() {
-    imgAddItem.setOnClickListener(this);
+    imgAddItem.setOnClickListener(this); // Adds single items from the EditText in MainActivity
+
+    // This toggles the checkbox on an item displayed in the recycler view
     adapterMain.setCheckBoxListener(new RecyclerAdapterMain.CheckBoxListener() {
       @Override
       public void onCheckBoxClicked(ListItem item) {
+        // Do not update ListItem directly or DiffUtil won't update the list properly. Instead
+        // create new item with same ID and new data to update
         ListItem newListItem = new ListItem();
         newListItem.setId(item.getId());
         newListItem.setItemName(item.getItemName());
-        newListItem.setChecked(!item.getIsChecked()); // toggle isChecked value
+        newListItem.setChecked(!item.getIsChecked()); // Toggle isChecked value
         viewModel.update(newListItem);
-        Log.i(TAG, "onCheckBoxClicked: called update " + item.getItemName());
       }
     });
   }
 
-  @Override // TODO: use if statement instead of switch
+  // Inserts a new ListItem when MainActivity's EditText is used
   public void onClick(View v) {
-    switch (v.getId()) {
-      case R.id.img_add_item_main:
+    if (v.getId() == R.id.img_add_item_main) {
         String itemName = String.valueOf(edtAddItem.getText());
-        if (!itemName.trim().equals("")) { // if EditText is not empty
+        if (!itemName.trim().equals("")) { // Insert new list item only if the EditText is not empty
           ListItem item = new ListItem();
           item.setItemName(itemName);
           viewModel.insert(item);
         }
-
-        // clear EditText and resent hint
+        // Clear EditText and resent hint
         edtAddItem.setText("");
-        edtAddItem.setHint("Add item");
+        edtAddItem.setHint(R.string.add_item);
     }
   }
 
@@ -185,19 +167,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
         int position = viewHolder.getAdapterPosition();
 
-        // delete item on right swipe
+        // Right swipes are to delete items
         if (direction == ItemTouchHelper.RIGHT) {
           ListItem deletedItem = adapterMain.getItemAt(position);
           viewModel.delete(deletedItem);
           showUndoSnackBar(deletedItem);
         } else {
-
-          // edit item on left swipe //
+          // Left swipes are to edit items
           showEditItemAlert(viewHolder, position);
-
-          // restores the foreground layer after swiping left to edit and clicking cancel button ------ TODO: get foreground instead
-          //adapterMain.notifyItemChanged(position);
-
         }
       }
 
@@ -205,138 +182,162 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
         if (viewHolder != null) {
 
-          // change the item view's color to indicate it is being swiped
-//          if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-//            viewHolder.itemView.findViewById(R.id.foreground_layout).setBackgroundColor(getResources().getColor(R.color.swipeColor, null));
-//            // TODO: change text color
-//          }
+          // Change the item view's color to indicate it is being swiped
+          if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+            viewHolder.itemView.findViewById(R.id.foreground_layout)
+                .setBackgroundColor(getResources().getColor(R.color.swipeColor, null));
+          }
         }
       }
 
+      // Called when user interaction with recycler view element is over and animation is complete.
       @Override
-      public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+      public void clearView(@NonNull RecyclerView recyclerView,
+                            @NonNull RecyclerView.ViewHolder viewHolder) {
 
-        // bring foreground layer back on top when delete operation is undone
-        final View foregroundLayout = ((RecyclerAdapterMain.ListItemHolder) viewHolder).getForegroundLayout();
+        // Bring foreground layer back on top when delete operation is undone
+        final View foregroundLayout = viewHolder.itemView.findViewById(R.id.foreground_layout);
         getDefaultUIUtil().clearView(foregroundLayout);
 
-        // change back to original white color when swipe is released
-        //viewHolder.itemView.findViewById(R.id.foreground_layout).setBackgroundColor(getResources().getColor(R.color.swipeReleased, null));
+        // Change back to original color when partial swipe is released
+        foregroundLayout.setBackgroundColor(getResources().getColor(R.color.swipeReleased, null));
       }
 
       @Override
-      public void onChildDraw(@NonNull Canvas canvas, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+      public void onChildDraw(@NonNull Canvas canvas,
+                              @NonNull RecyclerView recyclerView,
+                              @NonNull RecyclerView.ViewHolder viewHolder,
+                              float dX, float dY, int actionState, boolean isCurrentlyActive) {
+
+        View view = viewHolder.itemView;
+
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
 
-          // use getDefaultUIUtil to have background stay stationary while foreground is swiped
-          final View foregroundLayout = ((RecyclerAdapterMain.ListItemHolder) viewHolder).getForegroundLayout();
-          getDefaultUIUtil().onDraw(canvas, recyclerView, foregroundLayout, dX, dY, actionState, isCurrentlyActive);
+          // Use getDefaultUIUtil to have background stay stationary while foreground is swiped
+          final View foregroundLayout = view.findViewById(R.id.foreground_layout);
+          getDefaultUIUtil().onDraw(canvas, recyclerView, foregroundLayout,
+              dX, dY, actionState, isCurrentlyActive);
 
-          if (dX > 0) { // if swiped right to delete
-            // change background to red
-            ((RecyclerAdapterMain.ListItemHolder) viewHolder).getBackgroundLayout().setBackgroundColor(getResources().getColor(R.color.itemviewBackgroundColorDelete, null));
+          if (dX > 0) { // User swiped right to delete
 
-            // hide edit icon and edit text after 3/4 swipe to delete
-            if (dX > 1) {
-              viewHolder.itemView.findViewById(R.id.img_edit_icon).setVisibility(View.GONE);
-              viewHolder.itemView.findViewById(R.id.txt_edit).setVisibility(View.GONE);
-            }
+            // Change background color to indicate delete mode
+            view.findViewById(R.id.background_layout)
+                .setBackgroundColor(getResources()
+                    .getColor(R.color.backgroundColorDelete, null));
 
-            // make delete icon and text visible if they were set to View.GONE
-            viewHolder.itemView.findViewById(R.id.txt_delete).setVisibility(View.VISIBLE);
-            viewHolder.itemView.findViewById(R.id.img_delete_icon).setVisibility(View.VISIBLE);
+            // Hide edit icon and edit text if user swipes to delete
+            view.findViewById(R.id.img_edit_icon).setVisibility(View.GONE);
+            view.findViewById(R.id.txt_edit).setVisibility(View.GONE);
 
-          } else if (dX < 0) { // user swiped left to edit
+            // Make delete icon and text visible if they were hidden
+            view.findViewById(R.id.txt_delete).setVisibility(View.VISIBLE);
+            view.findViewById(R.id.img_delete_icon).setVisibility(View.VISIBLE);
 
-            // change background color to orange
-            ((RecyclerAdapterMain.ListItemHolder) viewHolder).getBackgroundLayout().setBackgroundColor(getResources().getColor(R.color.itemViewBackgroundColorEdit, null));
+          } else if (dX < 0) { // User swiped left to edit
 
-            // hide delete icon and text after 3/4 swipe to edit
-            if (dX < -1) {
-              viewHolder.itemView.findViewById(R.id.img_delete_icon).setVisibility(View.GONE);
-              viewHolder.itemView.findViewById(R.id.txt_delete).setVisibility(View.GONE);
-            }
+            // Change background color to indicate edit mode
+            view.findViewById(R.id.background_layout)
+                .setBackgroundColor(getResources()
+                    .getColor(R.color.backgroundColorEdit, null));
 
-            // set edit icon and text visible if they were set to View.GONE
-            viewHolder.itemView.findViewById(R.id.txt_edit).setVisibility(View.VISIBLE);
-            viewHolder.itemView.findViewById(R.id.img_edit_icon).setVisibility(View.VISIBLE);
+            // Hide delete icon if user swipes to edit
+            view.findViewById(R.id.img_delete_icon).setVisibility(View.GONE);
+            view.findViewById(R.id.txt_delete).setVisibility(View.GONE);
 
-            //Log.i(TAG, "dX value: " + dX);
-           //clearView(recyclerMain, viewHolder);
-
-            if(dX < -1400) {
-              //Log.i(TAG, "dX value: " + dX);
-              // cancel swipe
-//              final View backgroundLayout = ((RecyclerAdapterMain.ListItemHolder) viewHolder).getBackgroundLayout();
-//              float backgroundTranslation = backgroundLayout.getTranslationX();
-//              Log.i(TAG, "background translation: " + backgroundTranslation);
-            }
-            //getDefaultUIUtil().clearView(foregroundLayout);
+            // Set edit icon and text visible if they were hidden
+            view.findViewById(R.id.txt_edit).setVisibility(View.VISIBLE);
+            view.findViewById(R.id.img_edit_icon).setVisibility(View.VISIBLE);
           }
         }
       }
 
       @Override
-      public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-        // drag and drop not used
+      public boolean onMove(@NonNull RecyclerView recyclerView,
+                            @NonNull RecyclerView.ViewHolder viewHolder,
+                            @NonNull RecyclerView.ViewHolder target) {
+        // Drag and drop not used
         return false;
       }
     }).attachToRecyclerView(recyclerMain);
   }
 
-  // to undo a delete operation
+  // SnackBar to allow a user to undo a delete operation
   public void showUndoSnackBar(ListItem deletedItem) {
-    Snackbar undoSnackBar = Snackbar.make(constraintLayout, "Undo deleted Item", Snackbar.LENGTH_LONG).setAction("UNDO", new View.OnClickListener() {
+    Snackbar undoSnackBar = Snackbar.make(constraintLayout, "Undo deleted Item",
+        Snackbar.LENGTH_LONG).setAction("UNDO", new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        // restore deleted item to its original position in the list
+        // Restore deleted item to its original position in the list if UNDO is clicked
         viewModel.insert(deletedItem);
       }
     });
     undoSnackBar.show();
   }
 
-  // edit a swiped list item
+  // Edit a swiped list item in an AlertDialog popup
   private void showEditItemAlert(RecyclerView.ViewHolder viewHolder, int position) {
-    //List<ListItem> oldList = adapterMain.getCurrentList();
+
     ListItem listItem = adapterMain.getItemAt(position);
+
+    // Create new ListItem and populate with current ListItem info instead of updating the ListItem
+    // directly. This allows DiffUtil to update the list.
     ListItem newListItem = new ListItem();
     newListItem.setId(listItem.getId());
+    newListItem.setChecked(listItem.getIsChecked());
 
-    // set the EditText with the previous value and highlight all
+    // Set the EditText with the previous value to edit
     EditText edtItemName = new EditText(this);
     edtItemName.setPadding(30, 100, 0, 30);
-    edtItemName.setText(listItem.getItemName());
-    edtItemName.setSelectAllOnFocus(true);
+    edtItemName.setText(listItem.getItemName().trim());
     edtItemName.requestFocus();
+    edtItemName.setSelectAllOnFocus(true);
 
-    // create dialog to edit the item
-    AlertDialog alert = new AlertDialog.Builder(MainActivity.this).setTitle("Edit item")
+    // Create dialog to edit the item
+    AlertDialog.Builder alertBuilder =
+        new AlertDialog.Builder(MainActivity.this).setTitle("Edit item")
         .setView(edtItemName).setPositiveButton("OK", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
 
-        // update list with edited value
+        // Update list with the EditText value
         String editedItemName = String.valueOf(edtItemName.getText());
         newListItem.setItemName(editedItemName);
         viewModel.update(newListItem);
-
-//        List<ListItem> itemList = new ArrayList<>(adapterMain.getCurrentList());
-//        ListItem item = itemList.get(position);
-//        item.setItemName(editedItemName);
-//        adapterMain.submitList(itemList);
-        //adapterMain.notifyItemChanged(position);
       }
     }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
-        // this restores swiped away foreground layout
+
+        // This restores swiped away foreground layout when user clicks the cancel button
         adapterMain.notifyItemChanged(position);
       }
-    }).create();
-    // display keyboard
-    alert.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-    alert.show();
+    });
+    AlertDialog alertDialog = alertBuilder.show();
+
+    // Disable positive button until user makes changes to the EditText
+    alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+
+    // Display keyboard when alertDialog appears TODO: no longer working
+    alertDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+
+    // To detect changes in the EditText field
+    edtItemName.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void afterTextChanged(Editable s) {
+        // Enable positive button to be clicked after user makes changes
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        // Unused method
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        // Unused method
+      }
+    });
   }
 
   @Override
@@ -349,7 +350,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   @Override
   public boolean onOptionsItemSelected(@NonNull MenuItem item) {
     switch (item.getItemId()) {
-
       case R.id.icon_delete_all:
         viewModel.deleteAllItems();
         break;
@@ -367,23 +367,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         launchCamera();
         break;
       case R.id.icon_voice_recognition:
-        Log.i(TAG, "onOptionsItemSelected: startSpeechRecognizer1");
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) !=
+            PackageManager.PERMISSION_GRANTED) {
         requestPermission();
       } else {
-        Log.i(TAG, "onOptionsItemSelected: startSpeechRecognizer2");
         startSpeechRecognizer();
       }
         break;
-    } return super.onOptionsItemSelected(item);
+      default:
+    }
+    return super.onOptionsItemSelected(item);
   }
 
-  // launches the phone's camera and stores the image in a temporary file in the phone's cache
+  // Launches the phone's camera and stores the image in a temporary file in the phone's cache
   public void launchCamera() {
     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
     File photoFile = null;
 
-    // create a temp file in the phone's cache to store the image
+    // Create a temp file in the phone's cache to store the image
     try {
       File tempDir = this.getCacheDir();
       photoFile = File.createTempFile("jpeg_", ".jpg", tempDir);
@@ -391,14 +392,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       e.printStackTrace();
     }
 
-    // Uri will locate image file
+    // Uri to locate image file
     if (Build.VERSION.SDK_INT > 24) {
       imageUri = FileProvider.getUriForFile(this, AUTHORITY, photoFile);
     } else {
       imageUri = Uri.fromFile(photoFile); // for Android version < 24
     }
 
-    // for full size image, thumbnails have poor resolution for the text OCR to be accurate
+    // For full size image, thumbnails have poor resolution for the text OCR to be accurate
     intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
@@ -406,41 +407,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     if (intent.resolveActivity(getPackageManager()) != null) {
       startActivityForResult(intent, REQUEST_CODE_TAKE_PHOTO);
     }
-    photoFile.deleteOnExit(); // delete temp file
+    photoFile.deleteOnExit(); // Delete temp file when app is closed
   }
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent intent) {
-    super.onActivityResult(requestCode, resultCode, intent); // necessary?
+    super.onActivityResult(requestCode, resultCode, intent);
 
-    // required to retrieve image from MediaStore
+    // Resolver required to retrieve image from MediaStore
     ContentResolver contentResolver = this.getContentResolver();
 
-    // retrieve the bitmap returned by the photo app
+    // Retrieve the bitmap returned by the photo app and open cropping activity
     if (requestCode == REQUEST_CODE_TAKE_PHOTO && resultCode == RESULT_OK) {
       try {
         bitmap = android.provider.MediaStore.Images.Media.getBitmap(contentResolver, imageUri);
-        int width = bitmap.getWidth(); // debugging purposes
-        int height = bitmap.getHeight();
         launchCropImageActivity();
       } catch (IOException e) {
         e.printStackTrace();
       }
 
-      // get the cropped image
+      // Get the cropped image
     } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
       CropImage.ActivityResult result = CropImage.getActivityResult(intent);
       Uri resultUri = result.getUri();
       try {
         bitmap = android.provider.MediaStore.Images.Media.getBitmap(contentResolver, resultUri);
 
-        // detect text from the cropped image
+        // Detect text from the cropped image
         detectTextFromImage();
       } catch (IOException e) {
         e.printStackTrace();
       }
 
-      // get the list of added items back from ScannedTextActivity and insert into database
+      // Get the list of added items back from ScannedTextActivity and insert into database
     } else if (requestCode == REQUEST_CODE_SCANNED_LINES && resultCode == RESULT_OK) {
       ArrayList<String> resultsList = intent.getStringArrayListExtra("addedItemsList");
       for (String itemName : resultsList) {
@@ -451,15 +450,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
   }
 
-  // launch activity to crop image
+  // Launch activity to crop image
   // CREDIT: https://github.com/ArthurHub/Android-Image-Cropper library used
   private void launchCropImageActivity() {
-    CropImage.activity(imageUri).setAllowRotation(false).setAllowFlipping(false).setOutputCompressFormat(Bitmap.CompressFormat.JPEG).setOutputCompressQuality(100).start(this);
+    CropImage.activity(imageUri)
+        .setAllowRotation(false)
+        .setAllowFlipping(false)
+        .setOutputCompressFormat(Bitmap.CompressFormat.JPEG)
+        .setOutputCompressQuality(100)
+        .start(this);
   }
 
-  // detect text to add to list
+  // Detect text to add to list
   private void detectTextFromImage() {
-    Log.d(TAG, "detectTextFromImage has been called ");
     ArrayList<String> scannedLines = new ArrayList<>();
 
     // Firebase ML Kit to detect text from images
@@ -469,8 +472,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     detectTextTask.addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
       @Override
       public void onSuccess(FirebaseVisionText firebaseVisionText) {
-
-        Log.d(TAG, "onSuccess: has been called ");
 
         // text that has enough white space separating them will be captured in different TextBlocks
         // loop through each block to retrieve all lines
@@ -484,8 +485,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             scannedLines.add(line.getText());
           }
         }
-        Log.i(TAG, "scannedLines: " + scannedLines);
-        // pass the new list to ScannedTextActivity to display in a recycler view
+        // Pass the new list to ScannedTextActivity to display in a recycler view
         Intent i = new Intent(MainActivity.this, ScannedTextActivity.class);
         i.putStringArrayListExtra("scannedLines", scannedLines);
         startActivityForResult(i, REQUEST_CODE_SCANNED_LINES);
@@ -498,9 +498,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     });
   }
 
-  // Share the list via an intent
+  // Share the list via an intent. The system will display apps capable of sending text.
   private void showShareIntent() throws ExecutionException, InterruptedException {
-    String sharedItems = getItemsToShare();
+    String sharedItems = getItemsToShare(); // Creates a single String from a list
     Intent i = new Intent();
     i.setAction(Intent.ACTION_SEND);
     i.setType("text/plain");
@@ -508,29 +508,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     startActivity(Intent.createChooser(i, "share list"));
   }
 
-  // get a single String list from ListItem ArrayList to share
+  // Create a single String from a list to share
   private String getItemsToShare() throws ExecutionException, InterruptedException {
-    // itemList = adapterMain.getItemList();
     List<String> itemNames = viewModel.getItemNames();
-    String sharedItems = "\n\n";
+    String sharedItems = "";
     for (String name : itemNames) {
       sharedItems += name + "\n";
     }
     return sharedItems;
   }
 
-  // request permission to access audio recording feature
+  // Request permission to access audio recording feature, required on versions >= Marshmallow
   private void requestPermission() {
     // API level 23, Marshmallow
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       ActivityCompat.requestPermissions(this,
           new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE_VOICE_RECOGNITION);
     }
-
   }
 
   @Override
-  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+  public void onRequestPermissionsResult(int requestCode,
+                                         @NonNull String[] permissions,
+                                         @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     if (requestCode == REQUEST_CODE_VOICE_RECOGNITION && grantResults.length > 0) {
       if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -545,9 +545,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
     edtAddItem.setText("");
-    edtAddItem.setHint("Talk to input items");  // use String resource
+    edtAddItem.setHint(R.string.speech_input_hint);
     speechRecognizer.startListening(intent);
     speechRecognizer.setRecognitionListener(new RecognitionListener() {
+
+      @Override
+      public void onResults(Bundle results) {
+        String voiceResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).get(0);
+        if(voiceResults.toLowerCase().contains("amount")) {
+          Log.i(TAG, "results of voice recognition: contains the word amount!");
+          String[] splitResults = voiceResults.split("amount");
+          String quantity = splitResults[1].trim();
+
+          // add quantities to list items
+          quantity = quantityToNumber(quantity); // converts words to String "number" values
+          String resultsWithQtys = quantity + "  " + splitResults[0];
+          edtAddItem.setText(resultsWithQtys);
+        } else {
+          edtAddItem.setText(voiceResults);
+        }
+      }
+
+      // converts spelled out word versions of quantities to numeric String values
+      // e.g. "Five" -> "5". Quantities of 10 or more are automatically expressed as text "numbers"
+      private String quantityToNumber(String quantity) {
+        switch (quantity) {
+          case "two":
+          case "to":
+          case "too":
+            return "2";
+          case "three":
+            return "3";
+          case "four":
+          case "for":
+            return "4";
+          case "five":
+            return "5";
+          case "six":
+            return "6";
+          case "seven":
+            return "7";
+          case "ate":
+          case "eight":
+            return "8";
+          case "nine":
+            return "9";
+        }
+        return quantity;
+      }
+
       @Override
       public void onReadyForSpeech(Bundle params) {
 
@@ -576,54 +622,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onError(int error) {
 
-      }
-
-      @Override
-      public void onResults(Bundle results) {
-        String voiceResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).get(0);
-        if(voiceResults.toLowerCase().contains("amount")) {
-          Log.i(TAG, "results of voice recognition: contains the word amount!");
-          String[] splitResults = voiceResults.split("amount");
-          String quantity = splitResults[1].trim();
-          quantity = convertQuantity(quantity); // convert for numbers 2 or 4
-
-
-          String resultsWithQtys = quantity + "  " + splitResults[0];
-          edtAddItem.setText(resultsWithQtys);
-        } else {
-          edtAddItem.setText(voiceResults);
-        }
-      }
-
-      private String convertQuantity(String quantity) {
-        switch (quantity) {
-          case "two":
-          case "to":
-          case "too":
-            return "2";
-
-          case "three":
-            return "3";
-
-          case "four":
-          case "for":
-            return "4";
-
-          case "five":
-            return "5";
-
-          case "six":
-            return "6";
-
-          case "seven":
-            return "7";
-          case "ate":
-          case "eight":
-            return "8";
-          case "nine":
-            return "9";
-        }
-        return quantity;
       }
 
       @Override

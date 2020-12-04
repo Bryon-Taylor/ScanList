@@ -21,8 +21,6 @@ import com.bryontaylor.scanlist.R;
 
 import java.util.List;
 
-import static android.content.ContentValues.TAG;
-
 
 // ListAdapter has the getItem(int position) method that allows access to list items instead of
 // having to keep a local ArrayList to access. i.e. myList.get(int position)
@@ -42,7 +40,7 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
 
     @Override
     public boolean areContentsTheSame(@NonNull ListItem oldItem, @NonNull ListItem newItem) {
-      Log.i(TAG, "areContentsTheSame: old item checked " + oldItem.getItemName() + " " + oldItem.getIsChecked() + " new item checked " + oldItem.getItemName() + " " + newItem.getIsChecked() );
+      //Log.i(TAG, "areContentsTheSame: old item checked " + oldItem.getItemName() + " " + oldItem.getIsChecked() + " new item checked " + oldItem.getItemName() + " " + newItem.getIsChecked() );
 //      return oldItem.getItemName().equals(newItem.getItemName()) &&
 //          oldItem.getIsChecked() == newItem.getIsChecked();  // TODO override compareTo/equals method in POJO
       return oldItem.equals(newItem);
@@ -133,8 +131,8 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
     //ListItem item = itemList.get(position);
 
     ListItem item = getItem(position);
-    String itemName = item.getItemName();
-    Log.i(TAG, "onBindViewHolder: itemName " + item.getItemName());
+//    String itemName = item.getItemName();
+//    Log.i(TAG, "onBindViewHolder: itemName " + item.getItemName());
     holder.txtItemName.setText(item.getItemName());
     holder.checkBox.setChecked(item.getIsChecked());
 
@@ -180,7 +178,7 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
         }
       });
     }
-    public LinearLayout getForegroundLayout() {
+    public LinearLayout getForegroundLayout() { // TODO: not used?
       return foregroundLayout;
     }
 
@@ -189,7 +187,8 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
     }
   }
 
-//  public void setItemList(List<ListItem> oldItemList, List<ListItem> newItemList) {
+
+  //  public void setItemList(List<ListItem> oldItemList, List<ListItem> newItemList) {
 //    if(oldItemList != null) {
 //      for(ListItem listItem : oldItemList) {
 //        Log.i(TAG, "setItemList1: itemName: " + listItem.getItemName());

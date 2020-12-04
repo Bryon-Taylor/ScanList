@@ -7,12 +7,12 @@
   <!-- MainActivity -->
   <color name="toolbarColor">#1C75C3</color>
   <color name="hintTextColor">#858585</color>
-  <color name="swipeColor">#F7FF00</color>
+  <color name="swipeColor">#E1F5FE</color>
   <color name="swipeTextColor">#FFF</color>
   <color name="swipeReleased">#FFF</color>
   <color name="borderColor">#9098A1</color>
-  <color name="itemviewBackgroundColorDelete">#FF0000</color>
-  <color name="itemViewBackgroundColorEdit">#F4511E</color>
+  <color name="backgroundColorDelete">#BF0000</color>
+  <color name="backgroundColorEdit">#2E7D32</color>
   <color name="recyclerview_holder_color">#FFFFFF</color>
 
 </resources>
