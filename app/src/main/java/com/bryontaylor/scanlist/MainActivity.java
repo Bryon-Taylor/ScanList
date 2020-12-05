@@ -290,7 +290,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     edtItemName.setPadding(30, 100, 0, 30);
     edtItemName.setText(listItem.getItemName().trim());
     edtItemName.requestFocus();
-    edtItemName.setSelectAllOnFocus(true);
 
     // Create dialog to edit the item
     AlertDialog.Builder alertBuilder =
@@ -317,8 +316,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // Disable positive button until user makes changes to the EditText
     alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
 
-    // Display keyboard when alertDialog appears TODO: no longer working
-    alertDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+    // Display keyboard when alertDialog appears
+    //alertDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+    alertDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 
     // To detect changes in the EditText field
     edtItemName.addTextChangedListener(new TextWatcher() {
@@ -552,9 +552,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onResults(Bundle results) {
         String voiceResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).get(0);
-        if(voiceResults.toLowerCase().contains("amount")) {
+        if(voiceResults.toLowerCase().contains("count")) {
           Log.i(TAG, "results of voice recognition: contains the word amount!");
-          String[] splitResults = voiceResults.split("amount");
+          String[] splitResults = voiceResults.split("count");
           String quantity = splitResults[1].trim();
 
           // add quantities to list items
