@@ -563,17 +563,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
       // Get the list of added items back from ScannedTextActivity and insert into database
     } else if (requestCode == REQUEST_CODE_SCANNED_LINES && resultCode == RESULT_OK) {
-      List<ListItem> currentList;
+      List<ListItem> currentList = adapterMain.getCurrentList();
+      double currentListPos = adapterMain.getItemAt(currentList.size() - 1).getPositionInList() + 1;
       ArrayList<String> resultsList = intent.getStringArrayListExtra("addedItemsList");
       for (String itemName : resultsList) {
         ListItem newItem = new ListItem();
         newItem.setItemName(itemName);
-        currentList = adapterMain.getCurrentList();
+        //currentList = adapterMain.getCurrentList();
         ListItem lastItem = adapterMain.getItemAt(currentList.size() - 1);
-        newItem.setPositionInList(lastItem.getPositionInList() + 1);
+
+        newItem.setPositionInList(currentListPos);
+        currentListPos++;
         //newItem.setSortNumber(adapterMain.getCurrentList().size() - 1);
+        //adapterMain.notifyItemInserted(currentList.size());
         viewModel.insert(newItem);
-        adapterMain.notifyItemInserted(currentList.size()); // <<<<<<<<<<<<<<<<<<<<< not updating setPositionInList fast enough?
+         // TODO: <<<<<<<<<<<<<<<<<<<<< not updating setPositionInList fast enough?
       }
     }
   }
