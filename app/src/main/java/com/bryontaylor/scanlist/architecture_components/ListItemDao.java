@@ -23,8 +23,12 @@ public interface ListItemDao {
   @Delete
   void delete(ListItem item);
 
+//  // get all Items
+//  @Query("SELECT * FROM list_item_table")
+//  LiveData<List<ListItem>> getAllItems();
+
   // get all Items
-  @Query("SELECT * FROM list_item_table")
+  @Query("SELECT * FROM list_item_table ORDER BY positionInList ASC")
   LiveData<List<ListItem>> getAllItems();
 
   // delete all items

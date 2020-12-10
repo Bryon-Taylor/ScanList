@@ -1,4 +1,4 @@
-package com.bryontaylor.scanlist.adapters;
+package com.bryontaylor.scanlist;
 
 import android.graphics.Color;
 import android.util.Log;
@@ -15,23 +15,19 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bryontaylor.scanlist.ListDiffer;
-import com.bryontaylor.scanlist.ListItem;
-import com.bryontaylor.scanlist.R;
 
-import java.util.List;
-
-
-// ListAdapter has the getItem(int position) method that allows access to list items instead of
-// having to keep a local ArrayList to access. i.e. myList.get(int position)
-public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMain.ListItemHolder> {
+// ListAdapter has the getItem(position) method that allows access to list items instead of
+// having to keep a local ArrayList to access. i.e. myList.get(position)
+public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMain.ListItemHolder>
+    implements ItemTouchHelperAdapter {
 //public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMain.ListItemHolder> {
 
   public RecyclerAdapterMain() {
     super(DIFF_CALLBACK);
   }
 
-   //static keyword makes DIFF_CALLBACK variable available to the constructor when it is called
+    // Static keyword makes DIFF_CALLBACK variable available to the constructor when it is called
+    // DiffUtil will compare two objects to determine if updates are needed
     private static final DiffUtil.ItemCallback<ListItem> DIFF_CALLBACK = new DiffUtil.ItemCallback<ListItem>() {
     @Override
     public boolean areItemsTheSame(@NonNull ListItem oldItem, @NonNull ListItem newItem) {
@@ -40,54 +36,22 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
 
     @Override
     public boolean areContentsTheSame(@NonNull ListItem oldItem, @NonNull ListItem newItem) {
-      //Log.i(TAG, "areContentsTheSame: old item checked " + oldItem.getItemName() + " " + oldItem.getIsChecked() + " new item checked " + oldItem.getItemName() + " " + newItem.getIsChecked() );
-//      return oldItem.getItemName().equals(newItem.getItemName()) &&
-//          oldItem.getIsChecked() == newItem.getIsChecked();  // TODO override compareTo/equals method in POJO
       return oldItem.equals(newItem);
     }
-//
-//    // method gets called if areItemsTheSame returns true and areContentsTheSame returns false
-////    @Nullable
-////    @Override
-////    public Object getChangePayload(@NonNull ListItem oldItem, @NonNull ListItem newItem) {
-////      Bundle diffBundle = new Bundle();
-////      if(!oldItem.getItemName().equals(newItem.getItemName())) {
-////        diffBundle.putString("itemName", newItem.getItemName());
-////      }
-////      if(!oldItem.getIsChecked() != newItem.getIsChecked()) {
-////        diffBundle.putBoolean("isChecked", newItem.getIsChecked());
-////      }
-////      if(diffBundle.size() == 0) {
-////        Log.i(TAG, "diffBundleSize " + diffBundle.size());
-////        return null;
-////      }
-////      return diffBundle;
-////    }
   };
 
-
-  //private List<String> itemList;
   //private List<ListItem> itemList;
 
   // registers MainActivity as a listener to checkbox clicks. Main will update database accordingly.
   private CheckBoxListener checkBoxListener;
 
-
-
-
-//  public static final DiffUtil.ItemCallback<ListItem> DIFF_CALLBACK = new DiffUtil.ItemCallback<ListItem>() {
-//    @Override
-//    public boolean areItemsTheSame(@NonNull ListItem oldItem, @NonNull ListItem newItem) {
-//      return oldItem.getId() == newItem.getId();
-//    }
-//
-//    @Override
-//    public boolean areContentsTheSame(@NonNull ListItem oldItem, @NonNull ListItem newItem) {
-//      return oldItem.getItemName().equals(newItem.getItemName()) &&
-//          oldItem.getIsChecked() == newItem.getIsChecked();
-//    }
-//  };
-
+  @Override
+  public void onItemMove(int fromPosition, int toPosition) {
+//    ListItem fromListItem = getItem(fromPosition);
+//    getCurrentList().remove(fromListItem);
+//    getCurrentList().add(toPosition, fromListItem);
+//    notifyItemMoved(fromPosition, toPosition);
+  }
 
   public interface CheckBoxListener {
     void onCheckBoxClicked(ListItem item);
@@ -136,7 +100,7 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
     holder.txtItemName.setText(item.getItemName());
     holder.checkBox.setChecked(item.getIsChecked());
 
-    // set the item to "greyed out" if checkbox is checked, indicates item has been retrieved
+    // set the item to "greyed out" if checkbox is checked
     if(item.getIsChecked()) {
       holder.txtItemName.setTextColor(Color.LTGRAY);
     } else {
@@ -237,13 +201,10 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
     return getItem(position);
   }
 
-  private void runListDiffer(List<ListItem> oldItemList, List<ListItem> newItemList) {
-    DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new ListDiffer(oldItemList, newItemList));
-    diffResult.dispatchUpdatesTo(this);
-  }
-
-
-
+//  private void runListDiffer(List<ListItem> oldItemList, List<ListItem> newItemList) {
+//    DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new ListDiffer(oldItemList, newItemList));
+//    diffResult.dispatchUpdatesTo(this);
+//  }
 }
 
 

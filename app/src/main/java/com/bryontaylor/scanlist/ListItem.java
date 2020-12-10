@@ -13,6 +13,9 @@ public class ListItem {
   private String itemName;
   private boolean isChecked;
 
+  // testing
+  private double positionInList;
+
   public long getId() {
     return id;
   }
@@ -35,6 +38,15 @@ public class ListItem {
 
   public boolean getIsChecked() {
     return isChecked;
+  }
+
+  // testing
+  public void setPositionInList(double positionInList) {
+    this.positionInList = positionInList;
+  }
+
+  public double getPositionInList() {
+    return positionInList;
   }
 
   public boolean equals(@Nullable ListItem listItem) {
