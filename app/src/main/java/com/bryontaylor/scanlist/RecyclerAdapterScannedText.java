@@ -1,5 +1,8 @@
 package com.bryontaylor.scanlist;
 
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,14 +18,15 @@ import java.util.List;
 public class RecyclerAdapterScannedText extends
     RecyclerView.Adapter<RecyclerAdapterScannedText.ScannedTextViewHolder> {
 
+  private static final String TAG = "scannedAdapter";
   private List<String> scannedLines;
-  private List<ImageView> imgAddButtons;
   private OnAddBtnListener listener;
 
-  // pass scanned text lines to constructor
+  private ArrayList<RecyclerView.ViewHolder> viewHolders;
+
+  // Pass scanned text lines from the image to the constructor
   public RecyclerAdapterScannedText(List<String> scannedLines) {
     this.scannedLines = scannedLines;
-    imgAddButtons = new ArrayList<>();
   }
 
   @NonNull
@@ -36,6 +40,28 @@ public class RecyclerAdapterScannedText extends
   @Override
   public void onBindViewHolder(@NonNull ScannedTextViewHolder holder, int position) {
     holder.edtAddItem.setText(scannedLines.get(position));
+
+    // Track changes to EditTexts so any modifications can be passed back to ScannedTextActivity
+    holder.edtAddItem.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        // Use holder.getAdapterPosition() instead of provided "position" variable as it produces
+        // inaccurate results.
+        // Update String at this position when text changes
+        scannedLines.set(holder.getAdapterPosition(), String.valueOf(s));
+        Log.i(TAG, "position: " + position + " " + s);
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+
+      }
+    });
   }
 
   @Override
@@ -43,7 +69,7 @@ public class RecyclerAdapterScannedText extends
     return scannedLines == null ? 0 : scannedLines.size();
   }
 
-  // inner class for the ViewHolder
+  // Inner class for the ViewHolder
   class ScannedTextViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
     EditText edtAddItem;
@@ -54,10 +80,10 @@ public class RecyclerAdapterScannedText extends
       edtAddItem = itemView.findViewById(R.id.edt_add_item_scanned);
       imgAddItem = itemView.findViewById(R.id.img_add_item_scanned);
       imgAddItem.setOnClickListener(this);
-      imgAddButtons.add(imgAddItem);
+
     }
 
-    // if user clicks the add item button, get the current value in case user modified it
+    // If user clicks the add item button, get the current value in case user modified it
     @Override
     public void onClick(View v) {
 
@@ -79,12 +105,8 @@ public class RecyclerAdapterScannedText extends
     this.listener = listener;
   }
 
-  // get all CURRENT values of the EditTexts in case user modified them
-  public void addAllItems() {
-
-    // fires the onClick method for all buttons and adds all items
-    for(ImageView imgAddButton : imgAddButtons) {
-      imgAddButton.performClick();
-    }
+  // scannedLines ArrayList contains all current values of EditText (in case they were modified)
+  public List<String> getAllItems() {
+    return scannedLines;
   }
 }

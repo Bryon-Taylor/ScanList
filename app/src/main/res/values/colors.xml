@@ -14,5 +14,6 @@
   <color name="backgroundColorDelete">#BF0000</color>
   <color name="backgroundColorEdit">#2E7D32</color>
   <color name="recyclerview_holder_color">#FFFFFF</color>
+  <color name="dragColor">#E1F5FE</color>
 
 </resources>

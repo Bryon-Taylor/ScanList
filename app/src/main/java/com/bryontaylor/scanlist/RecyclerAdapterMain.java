@@ -18,8 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 // ListAdapter has the getItem(position) method that allows access to list items instead of
 // having to keep a local ArrayList to access. i.e. myList.get(position)
-public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMain.ListItemHolder>
-    implements ItemTouchHelperAdapter {
+public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMain.ListItemHolder> {
 //public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMain.ListItemHolder> {
 
   public RecyclerAdapterMain() {
@@ -40,18 +39,11 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
     }
   };
 
+
   //private List<ListItem> itemList;
 
   // registers MainActivity as a listener to checkbox clicks. Main will update database accordingly.
   private CheckBoxListener checkBoxListener;
-
-  @Override
-  public void onItemMove(int fromPosition, int toPosition) {
-//    ListItem fromListItem = getItem(fromPosition);
-//    getCurrentList().remove(fromListItem);
-//    getCurrentList().add(toPosition, fromListItem);
-//    notifyItemMoved(fromPosition, toPosition);
-  }
 
   public interface CheckBoxListener {
     void onCheckBoxClicked(ListItem item);
@@ -107,7 +99,11 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
       holder.txtItemName.setTextColor(Color.BLACK);
     }
   }
-
+//
+//  @Override
+//  public long getItemId(int position) {
+//    return getItemAt(position).getId();
+//  }
 //  @Override
 //  public int getItemCount() {
 //    return itemList == null ? 0 : itemList.size();

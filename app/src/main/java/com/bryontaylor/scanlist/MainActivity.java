@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private ConstraintLayout constraintLayout;
   private static final String TAG = "MainActivity";
 
+
   // For image capture from camera
   private Uri imageUri;
   private final String AUTHORITY = "com.bryontaylor.scanlist.provider";
@@ -151,11 +152,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     });
   }
 
-  // ItemTouchHelper class handles swipes on the recycler view
+  // ItemTouchHelper class handles swipes & drags on the recycler view
   private void createItemTouchHelper() {
-    new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN,
-        // support left and right swipes
+    new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+        // Support up and down dragging
+        ItemTouchHelper.UP | ItemTouchHelper.DOWN,
+        // Support left and right swipes
         ItemTouchHelper.START | ItemTouchHelper.END) {
+
+      // For Drag & Drop
+      List<ListItem> currentList;
+      float defaultElevation;
 
       @Override
       public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
@@ -168,27 +175,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           showUndoSnackBar(deletedItem);
         } else {
           // Left swipes are to edit items
-          showEditItemAlert(viewHolder, position);
+          showEditItemDialog(viewHolder, position);
         }
       }
 
       @Override
       public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
         if (viewHolder != null) {
+          View foregroundLayout = viewHolder.itemView.findViewById(R.id.foreground_layout);
+          if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) { // If user swipes
 
-          // Change the item view's color to indicate it is being swiped
-          if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-            viewHolder.itemView.findViewById(R.id.foreground_layout)
-                .setBackgroundColor(getResources().getColor(R.color.swipeColor, null));
-          } else if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
-            // TODO: change color
+            // Change the item view's color to indicate it is being swiped
+            foregroundLayout.setBackgroundColor(getResources()
+                .getColor(R.color.swipeColor, null));
 
-            firstLastItem[0] = adapterMain.getItemAt(0);
-            firstLastItem[1] = adapterMain.getItemAt(adapterMain.getCurrentList().size() - 1);
+          } else if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) { // If user drags
 
-            Log.i(TAG, "first item name: " + firstLastItem[0].getItemName());
-            Log.i(TAG, "last item name: " + firstLastItem[1].getItemName());
+            currentList = new ArrayList<>(adapterMain.getCurrentList());
 
+            // Change the item view's color to indicate it is being dragged
+            foregroundLayout.setBackgroundColor(getResources()
+                .getColor(R.color.dragColor, null));
+
+            // To restore viewHolder's default elevation after dragging
+            defaultElevation = viewHolder.itemView.getElevation();
+
+            // Change the elevation to visually "pick up" a list item to drag it
+            viewHolder.itemView.setElevation(80);
           }
         }
       }
@@ -198,6 +211,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       public void clearView(@NonNull RecyclerView recyclerView,
                             @NonNull RecyclerView.ViewHolder viewHolder) {
 
+        //adapterMain.submitList(currentList); // TODO: change this to call submitList once
         // Bring foreground layer back on top when delete operation is undone
         final View foregroundLayout = viewHolder.itemView.findViewById(R.id.foreground_layout);
         getDefaultUIUtil().clearView(foregroundLayout);
@@ -206,35 +220,71 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         foregroundLayout.setBackgroundColor(getResources().getColor(R.color.swipeReleased, null));
 
         int position = viewHolder.getAdapterPosition();
-        ListItem movedItem;
+        double movedItemNewPos, itemBeforePos, itemAfterPos;
 
+        // Skip this code if item was deleted (indicates by -1. Otherwise, update the moved
         if(position != -1) {
-          if(position == 0) { // if dragged to beginning of list
-            double itemBelowPos = adapterMain.getItemAt(position + 1).getPositionInList();
-            movedItem = adapterMain.getItemAt(position);
-            double movedItemNewPos = itemBelowPos - 1;
-            //movedItem = adapterMain.getItemAt(position);
-            updateItemPosInDb(movedItem, movedItemNewPos);
+          ListItem movedItem = adapterMain.getItemAt(position);
+          // If dragged to the beginning of the list, subtract 1 from the previously lowest
+          // positionInList value (the item below it) and assign it the moved item. This will ensure
+          // that it now has the lowest positionInList value and will be ordered first in the list.
+          if(position == 0) {
+            itemAfterPos = adapterMain.getItemAt(position + 1).getPositionInList();
+            movedItemNewPos = itemAfterPos - 1;
 
-          } else if (position == (adapterMain.getCurrentList().size() - 1)) { // dragged to end of list
-            Log.i(TAG, "clearView: dragged to end of list");
-            double itemAbovePos = adapterMain.getItemAt(position - 1).getPositionInList();
-            movedItem = adapterMain.getItemAt(position);
-            double movedItemNewPos = itemAbovePos + 1;
-            updateItemPosInDb(movedItem, movedItemNewPos);
-            //movedItem = adapterMain.getItemAt(position);
-          } else { // dragged somewhere in the middle of list
-            ListItem itemBefore = adapterMain.getItemAt(position - 1);
-            double itemBeforePos = itemBefore.getPositionInList();
-            ListItem itemAfter = adapterMain.getItemAt(position + 1);
-            double itemAfterPos = itemAfter.getPositionInList();
-            movedItem = adapterMain.getItemAt(position);
-            double movedItemNewPos = itemBeforePos + ((itemAfterPos - itemBeforePos) / 2.0);
-            updateItemPosInDb(movedItem, movedItemNewPos);
+            // If dragged to the end of list, add 1 to the positionInList value of the previously
+            // largest value and assign to the moved item to ensure it now has the largest value.
+          } else if (position == (adapterMain.getCurrentList().size() - 1)) {
+            itemBeforePos = adapterMain.getItemAt(position - 1).getPositionInList();
+            movedItemNewPos = itemBeforePos + 1;
+
+            // If dragged somewhere in the middle of list, get the positionInList variable value of
+            // the items before and after it. They are used to compute the moved item's new
+            // positionInList value.
+          } else {
+            itemBeforePos = adapterMain.getItemAt(position - 1).getPositionInList();
+            itemAfterPos = adapterMain.getItemAt(position + 1).getPositionInList();
+
+            // Calculates the moved item's positionInList variable to be half way between the
+            // item above it and item below it
+            movedItemNewPos = itemBeforePos + ((itemAfterPos - itemBeforePos) / 2.0);
           }
+          updateItemPosInDb(movedItem, movedItemNewPos);
+
+
+
+//          ArrayList<ListItem> newList = new ArrayList<>();
+//          newList.addAll(currentList);
+//          adapterMain.submitList(newList);
+
+//          for(ListItem item : currentList) {
+//            Log.i(TAG, "clearView itemName " + item.getItemName());
+//          }
+//
+//          List<ListItem> adapList = adapterMain.getCurrentList();
+//          for(ListItem item : adapList) {
+//            Log.i(TAG, "adapter itemName " + item.getItemName());
+//          }
         }
+//
+//        //adapterMain.submitList(currentList);
+//
+//
+//        adapterMain.submitList(new ArrayList<>(currentList));
+//
+//
+//        adapList = adapterMain.getCurrentList();
+//        for(ListItem item : adapList) {
+//          Log.i(TAG, "adapter itemName " + item.getItemName());
+//        }
+
+//        viewHolder.itemView.setScaleX(1);
+//        viewHolder.itemView.setScaleY(1);
+        viewHolder.itemView.setElevation(defaultElevation); // To visually "drop" a dragged item
       }
 
+      // This will update the the moved item's positionInList variable in the database to persist
+      // its order in the list. Elements are ordered (ascending) by the positionInList variable.
       private void updateItemPosInDb(ListItem movedItem, double movedItemNewPos) {
         ListItem newItem = new ListItem();
         newItem.setId(movedItem.getId());
@@ -250,75 +300,73 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                               @NonNull RecyclerView.ViewHolder viewHolder,
                               float dX, float dY, int actionState, boolean isCurrentlyActive) {
 
-        View view = viewHolder.itemView;
+        Log.i(TAG, "onChildDraw: called");
+        View v = viewHolder.itemView; // to shorten the code below
+        View foregroundLayout = v.findViewById(R.id.foreground_layout);
+        View backgroundLayout = v.findViewById(R.id.background_layout);
+        View editIcon = v.findViewById(R.id.img_edit_icon);
+        View editText = v.findViewById(R.id.txt_edit);
+        View deleteIcon = v.findViewById(R.id.img_delete_icon);
+        View deleteText = v.findViewById(R.id.txt_delete);
 
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
 
           // Use getDefaultUIUtil to have background stay stationary while foreground is swiped
-          final View foregroundLayout = view.findViewById(R.id.foreground_layout);
           getDefaultUIUtil().onDraw(canvas, recyclerView, foregroundLayout,
               dX, dY, actionState, isCurrentlyActive);
 
           if (dX > 0) { // User swiped right to delete
 
             // Change background color to indicate delete mode
-            view.findViewById(R.id.background_layout)
-                .setBackgroundColor(getResources()
-                    .getColor(R.color.backgroundColorDelete, null));
+            backgroundLayout.setBackgroundColor(getResources()
+                .getColor(R.color.backgroundColorDelete, null));
 
             // Hide edit icon and edit text if user swipes to delete
-            view.findViewById(R.id.img_edit_icon).setVisibility(View.GONE);
-            view.findViewById(R.id.txt_edit).setVisibility(View.GONE);
+            editIcon.setVisibility(View.GONE);
+            editText.setVisibility(View.GONE);
 
             // Make delete icon and text visible if they were hidden
-            view.findViewById(R.id.txt_delete).setVisibility(View.VISIBLE);
-            view.findViewById(R.id.img_delete_icon).setVisibility(View.VISIBLE);
+            deleteIcon.setVisibility(View.VISIBLE);
+            deleteText.setVisibility(View.VISIBLE);
 
           } else if (dX < 0) { // User swiped left to edit
 
             // Change background color to indicate edit mode
-            view.findViewById(R.id.background_layout)
-                .setBackgroundColor(getResources()
+            backgroundLayout.setBackgroundColor(getResources()
                     .getColor(R.color.backgroundColorEdit, null));
 
             // Hide delete icon if user swipes to edit
-            view.findViewById(R.id.img_delete_icon).setVisibility(View.GONE);
-            view.findViewById(R.id.txt_delete).setVisibility(View.GONE);
+            deleteIcon.setVisibility(View.GONE);
+            deleteText.setVisibility(View.GONE);
 
             // Set edit icon and text visible if they were hidden
-            view.findViewById(R.id.txt_edit).setVisibility(View.VISIBLE);
-            view.findViewById(R.id.img_edit_icon).setVisibility(View.VISIBLE);
+            editIcon.setVisibility(View.VISIBLE);
+            editText.setVisibility(View.VISIBLE);
           }
         }
       }
 
-      @Override
-      public int getMovementFlags(@NonNull RecyclerView recyclerView,
-                                  @NonNull RecyclerView.ViewHolder viewHolder) {
-        int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
-        int swipeFlags = ItemTouchHelper.START | ItemTouchHelper.END;
-        return makeMovementFlags(dragFlags, swipeFlags);
-      }
+//      @Override
+//      public int getMovementFlags(@NonNull RecyclerView recyclerView,
+//                                  @NonNull RecyclerView.ViewHolder viewHolder) {
+//        int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
+//        int swipeFlags = ItemTouchHelper.START | ItemTouchHelper.END;
+//        return makeMovementFlags(dragFlags, swipeFlags);
+//      }
 
       @Override
       public boolean isLongPressDragEnabled() {
         return true; // handle inside viewHolder of recyclerView
       }
 
-      ListItem[] firstLastItem = new ListItem[2];
-      // For Drag & Drop
-      List<ListItem> currentList;
-
       @Override
       public boolean onMove(@NonNull RecyclerView recyclerView,
                             @NonNull RecyclerView.ViewHolder source,
                             @NonNull RecyclerView.ViewHolder target) {
 //        // testing
-        currentList = new ArrayList<>(adapterMain.getCurrentList());
-        Collections.swap(currentList, source.getAdapterPosition(), target.getAdapterPosition());
-        adapterMain.submitList(currentList);
+//        currentList = new ArrayList<>(adapterMain.getCurrentList());
+//        Collections.swap(currentList, source.getAdapterPosition(), target.getAdapterPosition());
         //adapterMain.notifyItemMoved(source.getAdapterPosition(), target.getAdapterPosition()); // may have to delete this just update database and have livedata update
-
 
 
         Log.i(TAG, "onMove: new source position is " + target.getAdapterPosition());
@@ -332,29 +380,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       public void onMoved(@NonNull RecyclerView recyclerView,
                           @NonNull RecyclerView.ViewHolder source, int fromPos,
                           @NonNull RecyclerView.ViewHolder target, int toPos, int x, int y) {
-//        super.onMoved(recyclerView, viewHolder, fromPos, target, toPos, x, y);
-        //adapterMain.notifyItemMoved(fromPos, toPos);
 
-        // TODO: send new adapter positions to database using adapterPosition before and after technique <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        // if new position is 0 or list.size() - 1
-        if(toPos == 0) {
-          Log.i(TAG, "onMoved: fromPos = " + fromPos + " toPos = " + toPos);
-          Log.i(TAG, "source adapter pos: " + source.getAdapterPosition());
-          Log.i(TAG, "target adapter pos: " + target.getAdapterPosition());
-
-          Log.i(TAG, "target name: " + adapterMain.getItemAt(0).getItemName());
-        } else if (toPos == (adapterMain.getItemCount() - 1)) {
-          //Log.i(TAG, "moved to end of list: ");
-        } else  {
-
-        }
 
         // adapterMain.getCurrentList() returns an unmodifiable list, convert to new ArrayList
-        currentList = new ArrayList<ListItem>(adapterMain.getCurrentList());
+        currentList = new ArrayList<>(adapterMain.getCurrentList());
         Collections.swap(currentList, toPos, fromPos);
-        //adapterMain.submitList(currentList);
+        adapterMain.submitList(currentList);
         //adapterMain.notifyItemMoved(fromPos, toPos);
-
       }
     }).attachToRecyclerView(recyclerMain);
   }
@@ -395,18 +427,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   // Edit a swiped list item in an AlertDialog popup
-  private void showEditItemAlert(RecyclerView.ViewHolder viewHolder, int position) {
+  private void showEditItemDialog(RecyclerView.ViewHolder viewHolder, int position) {
 
     ListItem currentListItem = adapterMain.getItemAt(position);
 
     // Create new ListItem and populate with currentListItem info instead of updating the ListItem
-    // directly. This allows DiffUtil to update the list.
+    // directly. This allows DiffUtil in the adapter to update the list.
     ListItem newListItem = new ListItem();
     newListItem.setId(currentListItem.getId());
     newListItem.setChecked(currentListItem.getIsChecked());
     newListItem.setPositionInList(currentListItem.getPositionInList());
 
-    // Set the EditText with the previous value to edit
+    // Set the EditText with the current value to edit
     EditText edtItemName = new EditText(this);
     edtItemName.setPadding(30, 100, 0, 30);
     edtItemName.setText(currentListItem.getItemName().trim());
@@ -430,7 +462,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // This restores swiped away foreground layout when user clicks the cancel button
         adapterMain.notifyItemChanged(position);
-
       }
     });
     AlertDialog alertDialog = alertBuilder.show();
@@ -439,8 +470,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
 
     // Display keyboard when alertDialog appears
-    //alertDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
-    alertDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+    alertDialog.getWindow()
+        .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 
     // To detect changes in the EditText field
     edtItemName.addTextChangedListener(new TextWatcher() {
@@ -564,13 +595,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       // Get the list of added items back from ScannedTextActivity and insert into database
     } else if (requestCode == REQUEST_CODE_SCANNED_LINES && resultCode == RESULT_OK) {
       List<ListItem> currentList = adapterMain.getCurrentList();
-      double currentListPos = adapterMain.getItemAt(currentList.size() - 1).getPositionInList() + 1;
+      double currentListPos;
+      if(!currentList.isEmpty()) {
+        currentListPos = adapterMain.getItemAt(currentList.size() - 1).getPositionInList() + 1;
+      } else {
+        currentListPos = 1;
+      }
       ArrayList<String> resultsList = intent.getStringArrayListExtra("addedItemsList");
       for (String itemName : resultsList) {
         ListItem newItem = new ListItem();
         newItem.setItemName(itemName);
         //currentList = adapterMain.getCurrentList();
-        ListItem lastItem = adapterMain.getItemAt(currentList.size() - 1);
+        //ListItem lastItem = adapterMain.getItemAt(currentList.size() - 1);
 
         newItem.setPositionInList(currentListPos);
         currentListPos++;
@@ -605,12 +641,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onSuccess(FirebaseVisionText firebaseVisionText) {
 
-        // text that has enough white space separating them will be captured in different TextBlocks
+        // Text that has enough white space separating them will be captured in different TextBlocks
         // loop through each block to retrieve all lines
         List<FirebaseVisionText.TextBlock> textBlocks = firebaseVisionText.getTextBlocks();
         for (FirebaseVisionText.TextBlock block : textBlocks) {
 
-          // text in close proximity will be stored in individual Lines in a list
+          // Text in close proximity will be stored in individual Lines in a list
           // lines are stored in blocks
           List<FirebaseVisionText.Line> lines = block.getLines();
           for (FirebaseVisionText.Line line : lines) {
@@ -684,21 +720,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onResults(Bundle results) {
         String voiceResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).get(0);
-        if(voiceResults.toLowerCase().contains("count")) {
-          Log.i(TAG, "results of voice recognition: contains the word amount!");
-          String[] splitResults = voiceResults.split("count");
+        if(voiceResults.toLowerCase().contains("*")) {
+          Log.i(TAG, "results of voice recognition: contains the word times!");
+          String[] splitResults = voiceResults.split("\\*");
           String quantity = splitResults[1].trim();
 
-          // add quantities to list items
+          // Add quantities to list items
           quantity = quantityToNumber(quantity); // converts words to String "number" values
           String resultsWithQtys = quantity + " - " + splitResults[0];
           edtAddItem.setText(resultsWithQtys);
-        } else { // otherwise just add spoken results
+        } else { // Otherwise just add spoken results
           edtAddItem.setText(voiceResults);
         }
       }
 
-      // converts spelled out word versions of quantities to numeric String values
+      // Converts spelled out word versions of quantities to numeric String values
       // e.g. "Five" -> "5". Quantities of 10 or more are automatically expressed as text "numbers"
       private String quantityToNumber(String quantity) {
         switch (quantity) {

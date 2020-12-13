@@ -7,7 +7,15 @@ public class MyRecyclerViewAnimator extends DefaultItemAnimator {
 
   @Override
   public boolean animateAdd(RecyclerView.ViewHolder holder) {
-    dispatchAddFinished(holder); // call this method immediately to avoid animations causing flashes
+    // call this method immediately to avoid animations causing flashes
+    dispatchAddFinished(holder);
+    return true;
+  }
+
+  @Override
+  public boolean animateRemove(RecyclerView.ViewHolder holder) {
+    // call this method immediately to avoid animations causing flashes
+    dispatchRemoveFinished(holder);
     return true;
   }
 
