@@ -2,7 +2,6 @@ package com.bryontaylor.scanlist;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -17,8 +16,8 @@ import java.util.List;
 
 public class ScannedTextActivity extends AppCompatActivity implements View.OnClickListener {
 
-  private static final String TAG = "tag";
   private ArrayList<String> scannedLines, addedItemsList;
+  private static final String SCANNED_LINES_KEY = "scannedLines";
   private RecyclerAdapterScannedText scannedTextAdapter;
   private RecyclerView recyclerView;
   private Button btnAddAll, btnDone;
@@ -33,11 +32,10 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
     initRecyclerView();
     attachListeners();
     createItemTouchHelper();
-
   }
 
   private void initComponents() {
-    setTitle("Add items to List");
+    setTitle(getString(R.string.choose_scanned_items));
     addedItemsList = new ArrayList<>();
     btnAddAll = findViewById(R.id.btn_add_all);
     btnDone = findViewById(R.id.btn_done);
@@ -46,7 +44,7 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
   // get the scanned text passed from MainActivity and set local ArrayList
   private void getScannedLinesIntent() {
     Intent i = getIntent();
-    scannedLines = i.getStringArrayListExtra("scannedLines");
+    scannedLines = i.getStringArrayListExtra(SCANNED_LINES_KEY);
   }
 
   private void initRecyclerView() {
@@ -92,28 +90,17 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
   private void addAllItems() {
     List<String> allItems = scannedTextAdapter.getAllItems();
     addedItemsList.addAll(allItems);
-//    for(int i = 0; i < scannedTextAdapter.getItemCount(); i++) {
-////      RecyclerView.ViewHolder holder =
-//
-//      Log.i(TAG, "addAllItems: adapter item count " + scannedTextAdapter.getItemCount());
-//      EditText editedItem = (recyclerView.findViewHolderForAdapterPosition(i).itemView.findViewById(R.id.edt_add_item_scanned));
-//      String editItemName = String.valueOf(editedItem.getText());
-//      addedItemsList.add(editItemName);
-//    }
-
   }
 
   // return list back to MainActivity's onActivityResult method
   private void returnListAndFinish() {
     Intent i = new Intent();
-    for(String line : addedItemsList) {
-      Log.i(TAG, "returnListAndFinish: " + line);
-    }
     i.putStringArrayListExtra("addedItemsList", addedItemsList);
     setResult(RESULT_OK, i);
     finish();
   }
 
+  // To support swipe to delete
   private void createItemTouchHelper() {
     new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
         0, ItemTouchHelper.START | ItemTouchHelper.END) {

@@ -8,6 +8,23 @@
   android:layout_height="match_parent"
   tools:context=".MainActivity" >
 
+  <androidx.appcompat.widget.Toolbar
+    android:id="@+id/mainToolbar"
+    android:layout_width="match_parent"
+    android:layout_height="?actionBarSize"
+    app:title="test"
+    app:autoSizeTextType="uniform"
+    android:background="@color/toolbarColor"
+    android:layout_gravity="center_vertical"
+
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintVertical_bias="0.0">
+
+  </androidx.appcompat.widget.Toolbar>
+
   <!-- insert a single list item from EditText in MainActivity -->
   <EditText
     android:id="@+id/edt_add_item_main"
@@ -17,14 +34,14 @@
     android:hint="@string/add_item"
     android:imeOptions="flagNoExtractUi"
     android:inputType="text"
-    android:padding="10dp"
+    android:padding="@dimen/edt_add_item_padding"
     android:textColor="#000"
-    android:textSize="20sp"
+    android:textSize="@dimen/edt_add_item_textSize"
     android:textColorHint="@color/hintTextColor"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/mainToolbar"
     app:layout_constraintVertical_bias="0.0"
     tools:ignore="Autofill" />
 
@@ -32,10 +49,11 @@
   <!-- "Button" to add a single item from MainActivity -->
   <ImageView
     android:id="@+id/img_add_item_main"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="@dimen/imgView_width_height"
+    android:layout_height="@dimen/imgView_width_height"
     android:contentDescription="@string/add_icon"
     android:src="@drawable/icon_add_main_40"
+    android:scaleType="fitXY"
     app:layout_constraintBottom_toBottomOf="@+id/edt_add_item_main"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"

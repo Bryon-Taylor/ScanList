@@ -32,9 +32,9 @@ android {
 
 dependencies {
 
-    implementation 'com.google.android.material:material:1.2.1'
     def room_version = "2.2.5"
 
+    implementation 'com.google.android.material:material:1.2.1'
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
@@ -53,11 +53,6 @@ dependencies {
 
     // for Android-Image-Cropper
     implementation 'com.theartofdev.edmodo:android-image-cropper:2.8.0'
-
-    /*
-    // Google ML Kit text recognition - these version cause dependency conflicts
-    implementation 'com.google.firebase:firebase-analytics:17.5.0'
-    implementation 'com.google.firebase:firebase-ml-vision:24.1.0' */
 
     // Vision - must use older version to avoid conflicts in dependencies
     implementation 'com.google.android.gms:play-services-vision:20.0.0'

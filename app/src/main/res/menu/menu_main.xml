@@ -2,11 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto">
 
-  <!-- voice recognition -->
+  <!-- voice recognition -->                            <!-- Changed this icon -->
   <item android:id="@+id/icon_voice_recognition"
-    android:title="@string/voice_recognition"
-    android:icon="@drawable/icon_mic_24"
-    app:showAsAction="always">
+  android:title="@string/voice_recognition"
+  android:icon="@drawable/icon_mic_24"
+  app:showAsAction="always">
   </item>
 
   <!-- launch camera -->
@@ -30,7 +30,7 @@
     android:id="@+id/icon_delete_all"
     android:title="@string/delete_all_items"
     android:icon="@drawable/icon_delete_all_24"
-    app:showAsAction="never">
+    app:showAsAction="ifRoom">
   </item>
 
   <!-- delete checked items -->
@@ -38,7 +38,7 @@
     android:id="@+id/icon_delete_checked"
     android:title="@string/delete_checked_items"
     android:icon="@drawable/icon_delete_24"
-    app:showAsAction="never">
+    app:showAsAction="ifRoom">
   </item>
 
 

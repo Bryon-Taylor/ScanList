@@ -14,4 +14,6 @@
   <string name="delete_checked_items">delete checked items</string>
   <string name="voice_recognition">voice recognition</string>
   <string name="speech_input_hint">Talk to input items</string>
+  <string name="edit_item">Edit Item</string>
+  <string name="choose_scanned_items">Choose Items to Add</string>
 </resources>

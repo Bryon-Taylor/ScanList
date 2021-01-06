@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+  <!-- MainActivity -->
+
+  <!-- Toolbar customizations -->
+  <dimen name="actionBarSize">38dp</dimen>
+
+  <dimen name="edt_add_item_textSize">16sp</dimen>
+  <dimen name="imgView_width_height">34dp</dimen>
+  <dimen name="border_weight">2dp</dimen>
+  <dimen name="edt_add_item_padding">6dp</dimen>
+
+  <!-- RecyclerView elements -->
+  <dimen name="recycler_item_elevation">0dp</dimen>
+  <dimen name="recycler_item_corner_radius">0dp</dimen>
+  <dimen name="recycler_item_name_textSize">14sp</dimen>
+
+  <!-- foreground layout -->
+  <dimen name="foreground_layout_padding_start">4dp</dimen>
+  <dimen name="foreground_layout_padding_top">1dp</dimen>
+  <dimen name="foreground_layout_padding_bottom">0dp</dimen>
+
+  <dimen name="textView_layout_weight">9.0</dimen>
+  <dimen name="checkBox_layout_weight">1.0</dimen>
+  <dimen name="check_box_scale_factor">0.7</dimen>
+
+  <!-- background layout -->
+  <dimen name="background_marginStart">2dp</dimen>
+  <dimen name="background_marginEnd">2dp</dimen>
+
+  <dimen name="background_textSize">10sp</dimen>
+
+</resources>

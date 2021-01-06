@@ -82,13 +82,13 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
   @Override
   public void onBindViewHolder(@NonNull ListItemHolder holder, int position) {
 
-    //Log.i(TAG, "onBindViewHolder: without payloads called");
+    //Log.i("name", "onBindViewHolder: without payloads called");
     // set the holder views values
     //ListItem item = itemList.get(position);
 
     ListItem item = getItem(position);
 //    String itemName = item.getItemName();
-//    Log.i(TAG, "onBindViewHolder: itemName " + item.getItemName());
+    Log.i("tag", "onBindViewHolder: itemName " + item.getItemName());
     holder.txtItemName.setText(item.getItemName());
     holder.checkBox.setChecked(item.getIsChecked());
 

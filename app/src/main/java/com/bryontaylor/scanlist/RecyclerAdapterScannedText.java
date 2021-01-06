@@ -24,7 +24,7 @@ public class RecyclerAdapterScannedText extends
 
   private ArrayList<RecyclerView.ViewHolder> viewHolders;
 
-  // Pass scanned text lines from the image to the constructor
+  // Pass scanned (OCR) text lines from the image to the constructor
   public RecyclerAdapterScannedText(List<String> scannedLines) {
     this.scannedLines = scannedLines;
   }
@@ -50,9 +50,8 @@ public class RecyclerAdapterScannedText extends
 
       @Override
       public void onTextChanged(CharSequence s, int start, int before, int count) {
-        // Use holder.getAdapterPosition() instead of provided "position" variable as it produces
-        // inaccurate results.
-        // Update String at this position when text changes
+        // Update String at this position when text changes. Use holder.getAdapterPosition()
+        // instead of provided "position" variable as it produces inaccurate results.
         scannedLines.set(holder.getAdapterPosition(), String.valueOf(s));
         Log.i(TAG, "position: " + position + " " + s);
       }
