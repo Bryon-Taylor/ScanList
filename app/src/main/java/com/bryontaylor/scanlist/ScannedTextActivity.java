@@ -41,7 +41,7 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
     btnDone = findViewById(R.id.btn_done);
   }
 
-  // get the scanned text passed from MainActivity and set local ArrayList
+  // Get the scanned text from image passed from MainActivity and set local ArrayList
   private void getScannedLinesIntent() {
     Intent i = getIntent();
     scannedLines = i.getStringArrayListExtra(SCANNED_LINES_KEY);
@@ -54,12 +54,12 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
     recyclerView.setAdapter(scannedTextAdapter);
   }
 
-  // listen to additions in the adapter
+  // Set button listeners
   private void attachListeners() {
     btnAddAll.setOnClickListener(this);
     btnDone.setOnClickListener(this);
 
-    // callback from RecyclerAdapterScannedText
+    // Callback from RecyclerAdapterScannedText
     scannedTextAdapter.setBtnAddListener(new RecyclerAdapterScannedText.OnAddBtnListener() {
       @Override
       public void addItemToList(String itemToAdd, int position) {
@@ -72,7 +72,6 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
       }
     });
   }
-
 
   @Override
   public void onClick(View view) {
@@ -92,7 +91,7 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
     addedItemsList.addAll(allItems);
   }
 
-  // return list back to MainActivity's onActivityResult method
+  // Return list back to MainActivity's onActivityResult method
   private void returnListAndFinish() {
     Intent i = new Intent();
     i.putStringArrayListExtra("addedItemsList", addedItemsList);
@@ -112,10 +111,12 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
         scannedTextAdapter.notifyItemRemoved(position);
 
       }
+
       @Override
       public boolean onMove(@NonNull RecyclerView recyclerView,
                             @NonNull RecyclerView.ViewHolder viewHolder,
                             @NonNull RecyclerView.ViewHolder target) {
+        // Drag and drop not supported
         return false;
       }
     }).attachToRecyclerView(recyclerView);

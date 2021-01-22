@@ -1,5 +1,7 @@
 package com.bryontaylor.scanlist;
 
+import android.content.res.ColorStateList;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,11 +17,28 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.List;
+
 
 // ListAdapter has the getItem(position) method that allows access to list items instead of
 // having to keep a local ArrayList to access. i.e. myList.get(position)
 public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMain.ListItemHolder> {
-//public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMain.ListItemHolder> {
+//    implements ItemTouchHelperAdapter {
+//public class RecyclerAdapterMain extends RecyclerView.Adapter<RecyclerAdapterMain.ListItemHolder>
+//    implements ItemTouchHelperAdapter {
+
+  private static final String TAG = "RecyclerAdapterMain";
+  // registers MainActivity as a listener to checkbox clicks. Main will update database accordingly.
+  private CheckBoxListener checkBoxListener;
+
+  public interface CheckBoxListener {
+    void onCheckBoxClicked(ListItem item);
+  }
+
+  // register MainActivity as a listener
+  public void setCheckBoxListener(CheckBoxListener checkBoxListener) {
+    this.checkBoxListener = checkBoxListener;
+  }
 
   public RecyclerAdapterMain() {
     super(DIFF_CALLBACK);
@@ -40,14 +59,9 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
   };
 
 
-  //private List<ListItem> itemList;
+  //private List<ListItem> currentList = new ArrayList<>();
 
-  // registers MainActivity as a listener to checkbox clicks. Main will update database accordingly.
-  private CheckBoxListener checkBoxListener;
 
-  public interface CheckBoxListener {
-    void onCheckBoxClicked(ListItem item);
-  }
 
   @NonNull
   @Override
@@ -58,45 +72,34 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
     return new ListItemHolder(itemView);
   }
 
-//  @Override
-//  public void onBindViewHolder(@NonNull ListItemHolder holder, int position, @NonNull List<Object> payloads) {
-//    //Log.i(TAG, "onBindViewHolder with payload called : " + payloads.size());
-//    if(payloads.isEmpty()) {
-//      super.onBindViewHolder(holder, position, payloads);
-//
-//    } else {
-//      Log.i(TAG, "payloads size is: " + payloads.size());
-//
-//      Bundle diffBundle = (Bundle) payloads.get(0);
-//      String itemName = diffBundle.getString("itemName");
-//      Log.i(TAG, "itemName in payload is: " + itemName);
-//      boolean isChecked = diffBundle.getBoolean("isChecked");
-//      holder.txtItemName.setText(itemName);
-//      holder.checkBox.setChecked(isChecked);
-//      //notifyItemChanged(position);
-//
-//    }
-
-//  }
-
   @Override
   public void onBindViewHolder(@NonNull ListItemHolder holder, int position) {
 
     //Log.i("name", "onBindViewHolder: without payloads called");
     // set the holder views values
-    //ListItem item = itemList.get(position);
+    //ListItem item = currentList.get(position);
+
 
     ListItem item = getItem(position);
+    Resources resources = holder.itemView.getContext().getResources();
 //    String itemName = item.getItemName();
     Log.i("tag", "onBindViewHolder: itemName " + item.getItemName());
     holder.txtItemName.setText(item.getItemName());
     holder.checkBox.setChecked(item.getIsChecked());
+//    if(holder.checkBox.isChecked()) {
+//      holder.checkBox.setButtonTintList(ColorStateList.valueOf(Resources.getSystem()
+//          .getColor(R.color.checkedColor, null)));
+//    }
 
     // set the item to "greyed out" if checkbox is checked
     if(item.getIsChecked()) {
       holder.txtItemName.setTextColor(Color.LTGRAY);
+      holder.checkBox.setButtonTintList(ColorStateList
+          .valueOf(resources.getColor(R.color.checkedColor, null)));
     } else {
       holder.txtItemName.setTextColor(Color.BLACK);
+      holder.checkBox.setButtonTintList(ColorStateList
+          .valueOf(resources.getColor(R.color.uncheckedColor, null)));
     }
   }
 //
@@ -106,7 +109,7 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
 //  }
 //  @Override
 //  public int getItemCount() {
-//    return itemList == null ? 0 : itemList.size();
+//    return currentList == null ? 0 : currentList.size();
 //  }
 
   public class ListItemHolder extends RecyclerView.ViewHolder {
@@ -129,11 +132,11 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
         public void onClick(View v) {
 
           Log.i("tag", "checkbox clicked: ");
-          //ListItem item = itemList.get(getAdapterPosition());
+          //ListItem item = currentList.get(getAdapterPosition());
           ListItem item = getItem(getAdapterPosition());
           String itemName = item.getItemName();
-          Log.i("tag", itemName + "'s checkbox was clicked");
-//          checkBoxListener.onCheckBoxClicked(itemList.get(getAdapterPosition()));
+          Log.i("tag", itemName + "'s checkbox was clicked " + checkBox.isChecked());
+          //checkBoxListener.onCheckBoxClicked(currentList.get(getAdapterPosition()));
           checkBoxListener.onCheckBoxClicked(getItem(getAdapterPosition()));
         }
       });
@@ -148,21 +151,23 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
   }
 
 
-  //  public void setItemList(List<ListItem> oldItemList, List<ListItem> newItemList) {
-//    if(oldItemList != null) {
-//      for(ListItem listItem : oldItemList) {
+//  public void setItemList(List<ListItem> newItemList) {
+//    if(currentList != null) {
+//      for(ListItem listItem : currentList) {
 //        Log.i(TAG, "setItemList1: itemName: " + listItem.getItemName());
 //      }
 //    }
-//    runListDiffer(oldItemList, newItemList);
-//    ListDiffer listDiffer = new ListDiffer(oldItemList, newItemList);
+//    //runListDiffer(currentList, newItemList);
+//    ListDiffer listDiffer = new ListDiffer(currentList, newItemList);
 //    DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(listDiffer);
+//    currentList.clear();
+//    currentList.addAll(newItemList);
 //    diffResult.dispatchUpdatesTo(this);
 ////    if(itemList != null) {
 ////      itemList.clear();
 ////      itemList.addAll(newItemList);
 ////    }
-//    itemList = newItemList;
+//
 ////    for(ListItem listItem : itemList) {
 ////      Log.i(TAG, "setItemList2: itemName: " + listItem.getItemName());
 ////    }
@@ -183,19 +188,36 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
 //    //notifyDataSetChanged();
 //  }
 
-//  public List<ListItem> getItemList() {
-//    return itemList;
-//  }
-
-  // register MainActivity as a listener
-  public void setCheckBoxListener(CheckBoxListener checkBoxListener) {
-    this.checkBoxListener = checkBoxListener;
+  public List<ListItem> getItemList() {
+    //return currentList;
+    return getCurrentList();
   }
 
   public ListItem getItemAt(int position) {
-    //return itemList.get(position);
+    //return currentList.get(position);
     return getItem(position);
   }
+
+//  @Override
+//  public void onItemMove(int fromPosition, int toPosition) { // TODO: try using local arraylist = getCurrentList()
+////    List<ListItem> currentList = new ArrayList<>(getCurrentList());
+////    ListItem fromItem = currentList.get(fromPosition);
+////    currentList.remove(fromPosition);
+////    currentList.add(toPosition, fromItem);
+////    //notifyItemMoved(fromPosition, toPosition);
+////    submitList(currentList);
+//  }
+//
+//  @Override
+//  public void onItemDelete(int position) {
+//
+//  }
+//
+//  @Override
+//  public void onItemUpdate(int position) {
+//
+//  }
+
 
 //  private void runListDiffer(List<ListItem> oldItemList, List<ListItem> newItemList) {
 //    DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new ListDiffer(oldItemList, newItemList));

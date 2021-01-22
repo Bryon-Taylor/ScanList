@@ -6,8 +6,10 @@ import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,14 +26,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -63,8 +66,9 @@ import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 /**
- * ScanList is a list app that allows the user to enter list items traditionally through typing
- * as well as through different input methods such as scanning voice clips and images for text.
+ * ScanList is a list creation app that allows the user to enter list items traditionally through
+ * typing as well as through faster input methods such as scanned voice entries and scanned images
+ * taken from the phone's camera for text.
  */
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -76,21 +80,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private DividerItemDecoration recyclerDivider;
   private ListItemViewModel viewModel;
   private ConstraintLayout constraintLayout;
-  private static final String TAG = "MainActivity";
-
-  private List<ListItem> currentList; // To track swapped items through drag and drop
-  private float DRAG_ELEVATION = 60f; // Elevate dragged item from its default
+  private static final String TAG = "MainActivity"; // TODO: delete
+  private LinearLayoutManager layoutManager;
 
   // For image capture from camera
   private Uri imageUri;
   private final String AUTHORITY = "com.bryontaylor.scanlist.provider";
-  private final int REQUEST_CODE_TAKE_PHOTO = 1000;
-  private final int REQUEST_CODE_SCANNED_LINES = 2000;
+  private static final int REQUEST_CODE_TAKE_PHOTO = 1000;
+  private static final int REQUEST_CODE_SCANNED_LINES = 2000;
   private Bitmap bitmap;
 
   // For voice recognition
   private static final int REQUEST_CODE_VOICE_RECOGNITION = 3000;
   private SpeechRecognizer speechRecognizer;
+
+  // For dragging and swiping
+  private int recyclerLastIndex;
+  private boolean wasDragged;
+  private boolean wasSwiped;
+  private ListItem movedItem;
+  private static final float DRAG_ELEVATION = 60f;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -102,9 +111,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     setListeners();
     setListObserver();
     createItemTouchHelper();
-
-    Toolbar toolbar = findViewById(R.id.mainToolbar);  /************ added toolbar to test ****************/
-    setSupportActionBar(toolbar);
   }
 
   // Initialize components
@@ -120,12 +126,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   // Initialize RecyclerView and Adapter
   private void initRecyclerView() {
     recyclerMain = findViewById(R.id.recycler_main);
-    LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+    layoutManager = new LinearLayoutManager(this);
     recyclerMain.setLayoutManager(layoutManager);
-    recyclerDivider = new DividerItemDecoration(recyclerMain.getContext(), layoutManager.getOrientation());
+    recyclerDivider = new DividerItemDecoration(recyclerMain.getContext(),
+        layoutManager.getOrientation());
     recyclerMain.addItemDecoration(recyclerDivider);
     adapterMain = new RecyclerAdapterMain();
-    recyclerMain.setItemAnimator(new MyRecyclerViewAnimator());
     recyclerMain.setAdapter(adapterMain);
   }
 
@@ -136,8 +142,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     adapterMain.setCheckBoxListener(new RecyclerAdapterMain.CheckBoxListener() {
       @Override
       public void onCheckBoxClicked(ListItem item) {
-        // Do not update ListItem directly or DiffUtil won't update the list properly. Instead
-        // create new item with same ID (and other fields) and new isChecked value to update
+        // Create a new item so onBindViewHolder is called and the colors for the checked or
+        // unchecked state are set properly
         ListItem newListItem = new ListItem();
         newListItem.setId(item.getId());
         newListItem.setItemName(item.getItemName());
@@ -154,8 +160,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onChanged(List<ListItem> newList) {
         adapterMain.submitList(newList); // Submit new list to ListAdapter
+
         for(ListItem item: newList) {
-          Log.i(TAG, "onChanged: " + item.getItemName());
+          Log.i(TAG, "onChanged: " + item.getItemName() + " " + item.getPositionInList());
         }
       }
     });
@@ -164,13 +171,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   // ItemTouchHelper class handles swipes & drags on the recycler view
   private void createItemTouchHelper() {
     new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
-        // Support up and down dragging
-        ItemTouchHelper.UP | ItemTouchHelper.DOWN,
-        // Support left and right swipes
-        ItemTouchHelper.START | ItemTouchHelper.END) {
+        ItemTouchHelper.UP | ItemTouchHelper.DOWN, // Support up and down dragging
+        ItemTouchHelper.START | ItemTouchHelper.END) { // Support left and right swipes
 
-      float defaultElevation; // To capture default elevation value when drag starts
-
+      private int originalTextColor; // To restore original text color after dragging
+      private List<ListItem> currentList; // To track swapped items through drag and drop
 
       @Override
       public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
@@ -179,34 +184,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Right swipes are to delete items
         if (direction == ItemTouchHelper.END) {
           ListItem deletedItem = adapterMain.getItemAt(position);
-          viewModel.delete(deletedItem);
+          viewModel.delete(deletedItem); // Delete from database
           showUndoSnackBar(deletedItem); // Deleted item is passed in case user wants to undo
 
         } else {
           // Left swipes are to edit items
-          showEditItemDialog(viewHolder, position);
+          showEditItemDialog(position);
         }
       }
 
+      // Called at the start of a swipe or drag
       @Override
       public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
         super.onSelectedChanged(viewHolder, actionState);
         if (viewHolder != null) {
           View foregroundLayout = viewHolder.itemView.findViewById(R.id.foreground_layout);
           if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) { // If user swipes
+            wasSwiped = true;
 
-            // Change the item view's color to indicate it is being swiped
+            // Change text color while being swiped
+            TextView textView = viewHolder.itemView.findViewById(R.id.txt_item_name);
+            originalTextColor = textView.getCurrentTextColor();
+            textView.setTextColor(getResources().getColor(R.color.swipeTextColor, null));
+
+            // Change checkbox color while being swiped
+            CheckBox checkBox = viewHolder.itemView.findViewById(R.id.checkBox);
+            checkBox.setButtonTintList(ColorStateList
+                .valueOf(getResources().getColor(R.color.swipeTextColor, null)));
+
+            // Change the background color to indicate it is being swiped
             foregroundLayout.setBackgroundColor(getResources()
                 .getColor(R.color.swipeColor, null));
 
           } else if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) { // If user drags
+            wasDragged = true;
+            movedItem = adapterMain.getItemAt(viewHolder.getAdapterPosition()); // Item being dragged
+            recyclerLastIndex = recyclerMain.getChildCount() - 1; // Used in onChildDraw method
 
-            // Change the item view's color to indicate it is being dragged
+            // Change the background color to indicate it is being dragged
             foregroundLayout.setBackgroundColor(getResources()
-                .getColor(R.color.dragColor, null));
+                .getColor(R.color.backgroundDragColor, null));
 
-            // To restore viewHolder's default elevation after dragging and dropping
-            defaultElevation = viewHolder.itemView.getElevation();
+            // Change text color while being dragged
+            TextView textView = viewHolder.itemView.findViewById(R.id.txt_item_name);
+            originalTextColor = textView.getCurrentTextColor(); // To restore color after drop
+            textView.setTextColor(getResources().getColor(R.color.viewDragColor, null));
+
+            // Set checkbox color while being dragged to match the text
+            CheckBox checkBox = viewHolder.itemView.findViewById(R.id.checkBox);
+            checkBox.setButtonTintList(ColorStateList
+                .valueOf(getResources().getColor(R.color.viewDragColor, null)));
 
             // Change the elevation to visually "pick up" a list item to drag it
             viewHolder.itemView.setElevation(DRAG_ELEVATION);
@@ -214,10 +241,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
       }
 
-      // Called when user interaction with recycler view element is over.
+      // Called when swiping or dragging is over
       @Override
       public void clearView(@NonNull RecyclerView recyclerView,
                             @NonNull RecyclerView.ViewHolder viewHolder) {
+
+        if(wasDragged) { // Restore original text and checkbox colors after drop
+          TextView textView = viewHolder.itemView.findViewById(R.id.txt_item_name);
+          textView.setTextColor(originalTextColor);
+
+          CheckBox checkBox = viewHolder.itemView.findViewById(R.id.checkBox);
+          if(checkBox.isChecked()) { // Checked
+            checkBox.setButtonTintList(ColorStateList.valueOf(getResources()
+                .getColor(R.color.checkedColor, null)));
+          } else if(!checkBox.isChecked()) { // Unchecked
+            checkBox.setButtonTintList(ColorStateList.valueOf(getResources()
+                .getColor(R.color.uncheckedColor, null)));
+          }
+        }
+
+        if(wasSwiped) { // Restore text and checkbox colors after being swiped
+          TextView textView = viewHolder.itemView.findViewById(R.id.txt_item_name);
+          CheckBox checkBox = viewHolder.itemView.findViewById(R.id.checkBox);
+
+          if(checkBox.isChecked()) {
+            textView.setTextColor(Color.LTGRAY);
+            checkBox.setButtonTintList(ColorStateList
+                .valueOf(getResources().getColor(R.color.checkedColor, null)));
+          } else {
+            checkBox.setButtonTintList(ColorStateList
+                .valueOf(getResources().getColor(R.color.uncheckedColor, null)));
+          }
+        }
 
         // Bring foreground layer back on top when delete operation is undone
         final View foregroundLayout = viewHolder.itemView.findViewById(R.id.foreground_layout);
@@ -230,39 +285,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int position = viewHolder.getAdapterPosition();
         double movedItemNewPos, itemBeforePos, itemAfterPos;
 
-        // Skip this code if item was deleted (indicated by -1). Otherwise, update the moved item
-        if(position != -1) {
-          ListItem movedItem = adapterMain.getItemAt(position);
+        // Skip this code if item was deleted (indicated by -1) or was swiped.
+        // Otherwise, update the dragged item
+        if(position != -1 && !wasSwiped) {
 
-          // If dragged to the beginning of the list, subtract 1 from the previously lowest
-          // positionInList value (the item below it) and assign it the moved item. This will ensure
-          // that it now has the lowest positionInList value and will be ordered first.
+          // If dragged to the beginning of the list (index 0) subtract 1 from the previously lowest
+          // positionInList value (the item after it at index 1) and assign it the moved item.
+          // It now has the lowest positionInList value and will be ordered first.
           if(position == 0) {
-            itemAfterPos = adapterMain.getItemAt(position + 1).getPositionInList();
+            itemAfterPos = currentList.get(position + 1).getPositionInList();
             movedItemNewPos = itemAfterPos - 1;
 
             // If dragged to the end of list, add 1 to the positionInList value of the previously
-            // largest value (the item above it) and assign to the moved item to order it last.
-          } else if (position == (adapterMain.getCurrentList().size() - 1)) {
-            itemBeforePos = adapterMain.getItemAt(position - 1).getPositionInList();
+            // largest value (the item before it at index currentList.size() - 2) and assign to the
+            // moved item to order it last.
+          } else if(position == currentList.size() - 1) {
+            itemBeforePos = currentList.get(position - 1).getPositionInList();
             movedItemNewPos = itemBeforePos + 1;
 
             // If dragged somewhere in the middle of list, get the positionInList variable value of
             // the items before and after it. They are used to compute the moved item's new
             // positionInList value, which will be half way between the values above and below it.
           } else {
-            itemBeforePos = adapterMain.getItemAt(position - 1).getPositionInList();
-            itemAfterPos = adapterMain.getItemAt(position + 1).getPositionInList();
+            itemBeforePos = currentList.get(position - 1).getPositionInList();
+            itemAfterPos = currentList.get(position + 1).getPositionInList();
 
             // Calculates the moved item's positionInList variable to be half way between the
             // item above it and item below it
             movedItemNewPos = itemBeforePos + ((itemAfterPos - itemBeforePos) / 2.0);
           }
-          updateItemPosInDB(movedItem, movedItemNewPos);
+          updateItemPosInDB(movedItem, movedItemNewPos); // Update the moved item's position in DB
         }
-
         // To visually "drop" a dragged item
         viewHolder.itemView.setElevation(0);
+
+        // Reset flags
+        wasSwiped = false;
+        wasDragged = false;
       }
 
       // This will update the the moved item's positionInList variable in the database to persist
@@ -279,6 +338,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                               float dX, float dY, int actionState, boolean isCurrentlyActive) {
 
         View v = viewHolder.itemView; // to shorten the code below
+
+        // Used to change the element colors and visibility of a ViewHolder
         View foregroundLayout = v.findViewById(R.id.foreground_layout);
         View backgroundLayout = v.findViewById(R.id.background_layout);
         View editIcon = v.findViewById(R.id.img_edit_icon);
@@ -320,19 +381,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             editIcon.setVisibility(View.VISIBLE);
             editText.setVisibility(View.VISIBLE);
           }
+        } else if(actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+
+          int viewHolderIndex = viewHolder.getAdapterPosition();
+
+          // Calling onChildDraw with dY = 0 will stop dragging outside recyclerView's bounds
+          if((viewHolderIndex == recyclerLastIndex && dY > 0) || (viewHolderIndex == 0 && dY < 0)) {
+            super.onChildDraw(canvas, recyclerView, viewHolder, dX,
+                0, actionState, isCurrentlyActive); // dY == 0
+          } else {
+            super.onChildDraw(canvas, recyclerView, viewHolder, dX,
+                dY, actionState, isCurrentlyActive); // Normal dY value
+          }
         }
       }
 
-      // Called when user moves an item around it the list
+      // Called when user drags an item around it the list
       @Override
       public boolean onMove(@NonNull RecyclerView recyclerView,
                             @NonNull RecyclerView.ViewHolder source,
                             @NonNull RecyclerView.ViewHolder target) {
 
+        int fromPosition = source.getAdapterPosition();
+        int toPosition = target.getAdapterPosition();
+
+        // Update position in the adapter
         currentList = new ArrayList<>(adapterMain.getCurrentList());
-        Collections.swap(currentList, target.getAdapterPosition(), source.getAdapterPosition());
+        Collections.swap(currentList, toPosition, fromPosition);
         adapterMain.submitList(currentList);
-        return false;
+        return true;
       }
     }).attachToRecyclerView(recyclerMain);
   }
@@ -363,11 +440,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   // SnackBar to allow a user to undo a delete operation
   public void showUndoSnackBar(ListItem deletedItem) {
-    Snackbar undoSnackBar = Snackbar.make(constraintLayout, "Undo deleted Item",
-        Snackbar.LENGTH_LONG).setAction("UNDO", new View.OnClickListener() {
+    Snackbar undoSnackBar = Snackbar.make(constraintLayout, R.string.undo_deleted_item,
+        Snackbar.LENGTH_LONG).setAction(R.string.undo, new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        // Restore deleted item to its original position in the list if UNDO is clicked
+        // Restore deleted item if UNDO is clicked
         viewModel.insert(deletedItem);
       }
     });
@@ -375,39 +452,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   // Edit a swiped list item in an AlertDialog popup
-  private void showEditItemDialog(RecyclerView.ViewHolder viewHolder, int position) {
+  private void showEditItemDialog(int position) {
 
     ListItem currentListItem = adapterMain.getItemAt(position);
 
-    // Create new ListItem and populate with currentListItem info instead of updating the ListItem
-    // directly. This allows DiffUtil in the adapter to update the list.
-    ListItem newListItem = new ListItem();
-    newListItem.setId(currentListItem.getId());
-    newListItem.setChecked(currentListItem.getIsChecked());
-    newListItem.setPositionInList(currentListItem.getPositionInList());
-
-    View customAlertDialog = LayoutInflater.from(MainActivity.this).inflate(R.layout.custom_edit_alert_dialog, null);
+    // Presents a dialog box to edit the swiped item
+    View customAlertDialog = LayoutInflater.from(MainActivity.this)
+        .inflate(R.layout.custom_edit_alert_dialog, null);
     EditText edtItemInDialog = customAlertDialog.findViewById(R.id.edt_item_dialog);
-    edtItemInDialog.setText(currentListItem.getItemName().trim());
+    edtItemInDialog.setText(currentListItem.getItemName().trim()); // Show current value
     edtItemInDialog.requestFocus();
-    edtItemInDialog.setSelection(0);
+    edtItemInDialog.setSelection(0); // Put the cursor at the beginning of the EditText
 
     // Create dialog to edit the list item
     AlertDialog.Builder alertBuilder =
         new AlertDialog.Builder(MainActivity.this)
             .setView(customAlertDialog)
-            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
 
         // Update list with the EditText value
         String editedItemName = String.valueOf(edtItemInDialog.getText());
-        if(!editedItemName.trim().equals("")) {
-          newListItem.setItemName(editedItemName);
-          viewModel.update(newListItem);
+        if(!editedItemName.trim().equals("")) { // Prevent empty values from being inserted
+          currentListItem.setItemName(editedItemName);
+          viewModel.update(currentListItem);
+          adapterMain.notifyItemChanged(position); // restore foreground
         }
       }
-    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+    }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
 
@@ -431,16 +504,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Enable positive button to be clicked after user makes changes
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
         if(s.length() == 0) {
-          // Do not allow an empty entry to be added. Disable the positive button
+          // Disallow an empty entry to be added. Disable the positive button if EditText is empty
           alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
         }
       }
 
-      // unused method
+      // Unused method
       @Override
       public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
-      // unused method
+      // Unused method
       @Override
       public void onTextChanged(CharSequence s, int start, int before, int count) { }
     });
@@ -545,7 +618,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         e.printStackTrace();
       }
 
-      // Get the list of added items back from ScannedTextActivity
+      // Get the list of added items back from ScannedTextActivity. This list is the result of
+      //
     } else if (requestCode == REQUEST_CODE_SCANNED_LINES && resultCode == RESULT_OK) {
       List<ListItem> currentList = adapterMain.getCurrentList();
       double currentListPos;
@@ -554,7 +628,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Get the last item's positionInList value and add 1 to order new item last
         currentListPos = adapterMain.getItemAt(currentList.size() - 1).getPositionInList() + 1;
       } else {
-        currentListPos = 1;
+        currentListPos = 1; // else the list was empty and this is the first insertion
       }
 
       // Loop through list and insert new items into the database
@@ -593,7 +667,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       public void onSuccess(FirebaseVisionText firebaseVisionText) {
 
         // Text that has enough white space separating them will be captured in different TextBlocks
-        // loop through each block to retrieve all lines
+        // Loop through each block to retrieve all lines
         List<FirebaseVisionText.TextBlock> textBlocks = firebaseVisionText.getTextBlocks();
         for (FirebaseVisionText.TextBlock block : textBlocks) {
 
@@ -632,7 +706,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     List<String> itemNames = viewModel.getItemNames();
     String sharedItems = "";
     for (String name : itemNames) {
-      sharedItems += name + "\n";
+      sharedItems += name + "\n"; // Creates a single string with new lines between items
     }
     return sharedItems;
   }
@@ -663,7 +737,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-    edtAddItem.setText("");
+    edtAddItem.setText(""); // TODO: string resources
     edtAddItem.setHint(R.string.speech_input_hint);
     speechRecognizer.startListening(intent);
     speechRecognizer.setRecognitionListener(new RecognitionListener() {
@@ -671,46 +745,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       @Override
       public void onResults(Bundle results) {
         String voiceResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).get(0);
-        // SpeechRecognizer converts the word "times" to "*"
+        // SpeechRecognizer converts the word "times" to "*" (multiplication symbol)
         if(voiceResults.toLowerCase().contains("*")) {
-          String[] splitResults = voiceResults.split("\\*");
+          String[] splitResults = voiceResults.split("\\*"); // Use "*" as delimiter
           String quantity = splitResults[1].trim();
 
-          // Add quantities to list items
-          quantity = quantityToNumber(quantity); // converts words to String "number" values
+          // Add a the quantity separated by a dash for readability
           String resultsWithQtys = quantity + " - " + splitResults[0];
           edtAddItem.setText(resultsWithQtys);
         } else { // Otherwise just add spoken results
           edtAddItem.setText(voiceResults);
         }
-      }
-
-      // Converts spelled out word versions of quantities to numeric String values
-      // e.g. "Five" -> "5". Quantities of 10 or more are automatically expressed as text "numbers"
-      private String quantityToNumber(String quantity) {
-        switch (quantity) {
-          case "two":
-          case "to":
-          case "too":
-            return "2";
-          case "three":
-            return "3";
-          case "four":
-          case "for":
-            return "4";
-          case "five":
-            return "5";
-          case "six":
-            return "6";
-          case "seven":
-            return "7";
-          case "ate":
-          case "eight":
-            return "8";
-          case "nine":
-            return "9";
-        }
-        return quantity;
       }
 
       // Following 8 methods are unused

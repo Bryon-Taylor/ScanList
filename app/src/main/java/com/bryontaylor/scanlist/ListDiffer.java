@@ -1,9 +1,7 @@
 package com.bryontaylor.scanlist;
 
-import android.os.Bundle;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DiffUtil;
 
 import java.util.List;
@@ -50,27 +48,27 @@ public class ListDiffer extends DiffUtil.Callback {
     return areContentsSame;
   }
 
-  @Nullable
-  @Override
-  public Object getChangePayload(int oldItemPosition, int newItemPosition) {
-    Log.i(TAG, "getChangePayload: called");
-    ListItem oldListItem = oldList.get(oldItemPosition);
-    ListItem newListItem = newList.get(newItemPosition);
-    Log.i(TAG, "getChangePayload: oldListItem " + oldListItem.getItemName());
-    Log.i(TAG, "getChangePayload: newListItem " + newListItem.getItemName());
-
-    Bundle diffBundle = new Bundle();
-
-    // if itemName doesn't match, put new name in bundle
-    if(!oldListItem.getItemName().equals(newListItem.getItemName())) {
-      diffBundle.putString("itemName", newListItem.getItemName());
-      Log.i(TAG, "getChangePayload: itemNames are NOT equal " + oldListItem.getItemName() + " - " + newListItem.getItemName());
-    }
-
-    // if isChecked doesn't match, put the new isChecked value in bundle
-    if(oldListItem.getIsChecked() != newListItem.getIsChecked()) {
-      diffBundle.putBoolean("isChecked", newListItem.getIsChecked());
-    }
-    return diffBundle.size() == 0 ? null : diffBundle;
-  }
+//  @Nullable
+//  @Override
+//  public Object getChangePayload(int oldItemPosition, int newItemPosition) {
+//    Log.i(TAG, "getChangePayload: called");
+//    ListItem oldListItem = oldList.get(oldItemPosition);
+//    ListItem newListItem = newList.get(newItemPosition);
+//    Log.i(TAG, "getChangePayload: oldListItem " + oldListItem.getItemName());
+//    Log.i(TAG, "getChangePayload: newListItem " + newListItem.getItemName());
+//
+//    Bundle diffBundle = new Bundle();
+//
+//    // if itemName doesn't match, put new name in bundle
+//    if(!oldListItem.getItemName().equals(newListItem.getItemName())) {
+//      diffBundle.putString("itemName", newListItem.getItemName());
+//      Log.i(TAG, "getChangePayload: itemNames are NOT equal " + oldListItem.getItemName() + " - " + newListItem.getItemName());
+//    }
+//
+//    // if isChecked doesn't match, put the new isChecked value in bundle
+//    if(oldListItem.getIsChecked() != newListItem.getIsChecked()) {
+//      diffBundle.putBoolean("isChecked", newListItem.getIsChecked());
+//    }
+//    return diffBundle.size() == 0 ? null : diffBundle;
+//  }
 }

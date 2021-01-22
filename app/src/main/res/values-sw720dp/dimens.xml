@@ -7,14 +7,14 @@
   <dimen name="actionBarSize">78dp</dimen>
 
   <!-- Add single item EditText and Button -->
-  <dimen name="edt_add_item_textSize">34sp</dimen>
-  <dimen name="imgView_width_height">56dp</dimen>
+  <dimen name="edt_add_item_textSize">24sp</dimen>
+  <dimen name="imgView_width_height">48dp</dimen>
   <dimen name="edt_add_item_padding">12dp</dimen>
 
   <!-- RecyclerView elements -->
   <dimen name="recycler_item_elevation">0dp</dimen>
   <dimen name="recycler_item_corner_radius">0dp</dimen>
-  <dimen name="recycler_item_name_textSize">32sp</dimen>
+  <dimen name="recycler_item_name_textSize">24sp</dimen>
 
   <dimen name="foreground_layout_padding_start">12dp</dimen>
   <dimen name="foreground_layout_padding_top">12dp</dimen>
@@ -22,13 +22,17 @@
 
   <dimen name="check_box_scale_factor">1.4</dimen>
 
-  <dimen name="textView_layout_weight">9.5</dimen>
-  <dimen name="checkBox_layout_weight">0.5</dimen>
+  <dimen name="textView_layout_weight">9.55</dimen>
+  <dimen name="checkBox_layout_weight">0.45</dimen>
 
-  <!-- background layout -->
+  <!-- Background layout -->
   <dimen name="background_marginStart">14dp</dimen>
   <dimen name="background_marginEnd">14dp</dimen>
 
   <dimen name="background_textSize">24sp</dimen>
+
+  <!-- EditText in Alert Dialog -->
+  <dimen name="textView_title_textSize">30sp</dimen>
+  <dimen name="editText_item_dialog_textSize">28sp</dimen>
 
 </resources>

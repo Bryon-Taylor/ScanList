@@ -16,4 +16,20 @@
   <string name="speech_input_hint">Talk to input items</string>
   <string name="edit_item">Edit Item</string>
   <string name="choose_scanned_items">Choose Items to Add</string>
+
+  <string name="empty_string"></string>
+
+  <!-- Snackbar -->
+  <string name="undo_deleted_item">Undo deleted item?</string>
+  <string name="undo">UNDO</string>
+
+  <!-- Edit dialog box -->
+  <string name="ok">OK</string>
+  <string name="cancel">Cancel</string>
+
+  <!-- startSpeechRecognizer() -->
+  <string name="asterisk">\\*</string>
+
+
+
 </resources>

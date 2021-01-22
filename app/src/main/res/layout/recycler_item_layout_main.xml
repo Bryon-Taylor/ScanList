@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:app="http://schemas.android.com/apk/res-auto"
-  android:id="@+id/card_view"
-  android:layout_width="match_parent"
-  android:layout_height="wrap_content"
-  android:elevation="@dimen/recycler_item_elevation"
-  app:cardCornerRadius="@dimen/recycler_item_corner_radius" >
+<!--<androidx.cardview.widget.CardView-->
+<!--  xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--  xmlns:app="http://schemas.android.com/apk/res-auto"-->
+<!--  android:id="@+id/card_view"-->
+<!--  android:layout_width="match_parent"-->
+<!--  android:layout_height="wrap_content">-->
 
   <!-- FrameLayout allows layouts to be layered.
        Background layout will show when top layout is swiped -->
   <FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="wrap_content">
 
-    <!-- background layout shows when items are swiped in recycler view -->
+    <!-- background layout shows when items are swiped in recycler view ccccccccccccccccccccccccchange colors to use @color -->
     <RelativeLayout
       android:id="@+id/background_layout"
       android:layout_width="match_parent"
@@ -90,6 +90,7 @@
       <!-- list item checkbox -->
       <CheckBox
         android:id="@+id/checkBox"
+        android:theme="@style/checkBoxTheme"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="@dimen/checkBox_layout_weight"
@@ -98,4 +99,4 @@
     </LinearLayout>
 
   </FrameLayout>
-</androidx.cardview.widget.CardView>
+<!--</androidx.cardview.widget.CardView>-->

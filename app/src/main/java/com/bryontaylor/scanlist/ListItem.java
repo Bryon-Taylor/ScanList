@@ -49,7 +49,10 @@ public class ListItem {
     return positionInList;
   }
 
-  public boolean equals(@Nullable ListItem listItem) {
-    return this.itemName.equals(listItem.getItemName()) && this.isChecked == listItem.getIsChecked();
+  @Override
+  public boolean equals(@Nullable Object obj) {
+    ListItem item = (ListItem) obj;
+    return this.itemName.equals(item.getItemName()) && this.isChecked == item.getIsChecked();
   }
+
 }

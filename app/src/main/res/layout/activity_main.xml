@@ -8,23 +8,6 @@
   android:layout_height="match_parent"
   tools:context=".MainActivity" >
 
-  <androidx.appcompat.widget.Toolbar
-    android:id="@+id/mainToolbar"
-    android:layout_width="match_parent"
-    android:layout_height="?actionBarSize"
-    app:title="test"
-    app:autoSizeTextType="uniform"
-    android:background="@color/toolbarColor"
-    android:layout_gravity="center_vertical"
-
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintVertical_bias="0.0">
-
-  </androidx.appcompat.widget.Toolbar>
-
   <!-- insert a single list item from EditText in MainActivity -->
   <EditText
     android:id="@+id/edt_add_item_main"
@@ -41,7 +24,7 @@
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@+id/mainToolbar"
+    app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintVertical_bias="0.0"
     tools:ignore="Autofill" />
 
@@ -60,20 +43,19 @@
     app:layout_constraintTop_toTopOf="@+id/edt_add_item_main"
     app:layout_constraintHorizontal_bias="0.995"/>
 
+
   <!-- Displays list items in MainActivity -->
   <androidx.recyclerview.widget.RecyclerView
     android:id="@+id/recycler_main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="0dp"
     android:layout_marginStart="4dp"
     android:layout_marginEnd="4dp"
-    android:clipChildren="false"
-    android:clipToPadding="false"
-    app:layout_constrainedHeight="true"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toBottomOf="@+id/edt_add_item_main"
-    app:layout_constraintVertical_bias="0.006" />
+    app:layout_constraintVertical_bias="0.00" >
+  </androidx.recyclerview.widget.RecyclerView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

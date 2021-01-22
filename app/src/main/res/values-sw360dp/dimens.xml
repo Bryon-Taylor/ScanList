@@ -2,16 +2,16 @@
 <resources>
 
   <!-- MainActivity -->
-  <dimen name="edt_add_item_textSize">22sp</dimen>
+  <dimen name="edt_add_item_textSize">20sp</dimen>
 
   <!-- RecyclerView elements -->
   <dimen name="recycler_item_elevation">0dp</dimen>
   <dimen name="recycler_item_corner_radius">0dp</dimen>
-  <dimen name="recycler_item_name_textSize">20sp</dimen>
+  <dimen name="recycler_item_name_textSize">18sp</dimen>
 
-  <dimen name="foreground_layout_padding_start">10dp</dimen>
-  <dimen name="foreground_layout_padding_top">6dp</dimen>
-  <dimen name="foreground_layout_padding_bottom">6dp</dimen>
+  <dimen name="foreground_layout_padding_start">2dp</dimen>
+  <dimen name="foreground_layout_padding_top">2dp</dimen>
+  <dimen name="foreground_layout_padding_bottom">2dp</dimen>
 
   <dimen name="check_box_scale_factor">1</dimen>
 

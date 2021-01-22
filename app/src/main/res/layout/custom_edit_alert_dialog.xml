@@ -11,14 +11,14 @@
     android:layout_height="wrap_content"
     android:gravity="center_horizontal"
     android:text="@string/edit_item"
-    android:textSize="24sp"
+    android:textSize="@dimen/textView_title_textSize"
     android:textStyle="bold" />
 
   <EditText
     android:id="@+id/edt_item_dialog"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:textSize="18sp"
+    android:textSize="@dimen/editText_item_dialog_textSize"
     android:layout_margin="10dp"/>
 
 </LinearLayout>
