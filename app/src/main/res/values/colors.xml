@@ -20,6 +20,8 @@
   <color name="checkedColor">#4CAF50</color>
   <color name="viewDragColor">#FFF</color>
 
+  <color name="recyclerBackground">#F6FCFF</color>
+
   <!-- End MainActivity -->
 
   <!-- Begin ScannedTextActivity -->
