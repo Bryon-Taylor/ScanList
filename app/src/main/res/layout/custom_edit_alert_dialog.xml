@@ -19,6 +19,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:textSize="@dimen/editText_item_dialog_textSize"
-    android:layout_margin="10dp"/>
+    android:layout_margin="@dimen/editText_layout_margin"/>
 
 </LinearLayout>

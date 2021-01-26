@@ -8,7 +8,7 @@
   android:layout_height="match_parent"
   tools:context=".MainActivity" >
 
-  <!-- insert a single list item from EditText in MainActivity -->
+  <!-- Insert a single list item from EditText in MainActivity -->
   <EditText
     android:id="@+id/edt_add_item_main"
     android:layout_width="match_parent"
@@ -18,18 +18,17 @@
     android:imeOptions="flagNoExtractUi"
     android:inputType="text"
     android:padding="@dimen/edt_add_item_padding"
-    android:textColor="#000"
+    android:textColor="@color/edit_add_item_textColor"
     android:textSize="@dimen/edt_add_item_textSize"
     android:textColorHint="@color/hintTextColor"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintVertical_bias="0.0"
+    app:layout_constraintVertical_bias="@dimen/edt_add_item_vertical_bias"
     tools:ignore="Autofill" />
 
-
-  <!-- "Button" to add a single item from MainActivity -->
+  <!-- "Button" to add a single item in MainActivity -->
   <ImageView
     android:id="@+id/img_add_item_main"
     android:layout_width="@dimen/imgView_width_height"
@@ -41,22 +40,21 @@
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="@+id/edt_add_item_main"
-    app:layout_constraintHorizontal_bias="0.995"/>
-
+    app:layout_constraintHorizontal_bias="@dimen/imgView_horizontal_bias"/>
 
   <!-- Displays list items in MainActivity -->
   <androidx.recyclerview.widget.RecyclerView
     android:id="@+id/recycler_main"
     android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_marginStart="4dp"
-    android:layout_marginEnd="4dp"
+    android:layout_height="@dimen/recycler_height"
+    android:layout_marginStart="@dimen/recycler_margin_start"
+    android:layout_marginEnd="@dimen/recycler_margin_end"
     android:background="@color/recyclerBackground"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toBottomOf="@+id/edt_add_item_main"
-    app:layout_constraintVertical_bias="0.00" >
+    app:layout_constraintVertical_bias="@dimen/recycler_vertical_bias">
   </androidx.recyclerview.widget.RecyclerView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

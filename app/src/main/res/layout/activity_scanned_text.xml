@@ -7,44 +7,43 @@
   android:layout_height="match_parent"
   tools:context=".ScannedTextActivity">
 
-  <!-- recycler view -->
-
-  <!-- button to add all items -->
+  <!-- Left button to add all items -->
   <Button
     android:id="@+id/btn_add_all"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@color/btnAddAllColor"
+    android:background="@color/colorPrimaryDark"
     android:text="@string/add_all"
     android:textColor="@android:color/white"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintHorizontal_bias="0.25"
+    app:layout_constraintHorizontal_bias="@dimen/left_button_horizontal_bias"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="@+id/recycler_scanned_text"
-    app:layout_constraintVertical_bias="0.95" />
+    app:layout_constraintVertical_bias="@dimen/btn_vertical_bias" />
 
-  <!-- button to finish activity -->
+  <!-- Right button to finish activity -->
   <Button
     android:id="@+id/btn_done"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@color/btnDoneColor"
+    android:background="@color/colorPrimaryDark"
     android:text="@string/done"
     android:textColor="@android:color/white"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintHorizontal_bias=".75"
+    app:layout_constraintHorizontal_bias="@dimen/right_button_horizontal_bias"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintVertical_bias=".95" />
+    app:layout_constraintVertical_bias="@dimen/btn_vertical_bias" />
 
-
+  <!-- Recycler view -->
   <androidx.recyclerview.widget.RecyclerView
     android:id="@+id/recycler_scanned_text"
     android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_marginBottom="20dp"
+    android:layout_height="match_parent"
+    android:background="@color/recyclerBackground"
+    android:layout_marginBottom="@dimen/recycler_margin_bottom"
     app:layout_constraintBottom_toTopOf="@+id/btn_add_all"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"

@@ -1,102 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--<androidx.cardview.widget.CardView-->
-<!--  xmlns:android="http://schemas.android.com/apk/res/android"-->
-<!--  xmlns:app="http://schemas.android.com/apk/res-auto"-->
-<!--  android:id="@+id/card_view"-->
-<!--  android:layout_width="match_parent"-->
-<!--  android:layout_height="wrap_content">-->
+<FrameLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content">
 
-  <!-- FrameLayout allows layouts to be layered.
-       Background layout will show when top layout is swiped -->
-  <FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+  <!-- Background layout shows when items are swiped in recycler view -->
+  <RelativeLayout
+    android:id="@+id/background_layout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent"
+    android:background="#FF0000">
 
-    <!-- background layout shows when items are swiped in recycler view ccccccccccccccccccccccccchange colors to use @color -->
-    <RelativeLayout
-      android:id="@+id/background_layout"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:background="#FF0000">
+    <!-- Delete icon -->
+    <ImageView
+      android:id="@+id/img_delete_icon"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_centerVertical="true"
+      android:layout_marginStart="@dimen/background_marginStart"
+      android:src="@drawable/icon_delete_24" />
 
-      <!-- delete icon -->
-      <ImageView
-        android:id="@+id/img_delete_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_marginStart="@dimen/background_marginStart"
-        android:src="@drawable/icon_delete_24" />
+    <!-- Edit icon -->
+    <ImageView
+      android:id="@+id/img_edit_icon"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentEnd="true"
+      android:layout_centerVertical="true"
+      android:layout_marginEnd="@dimen/background_marginEnd"
+      android:src="@drawable/icon_edit_24" />
 
-      <!-- edit icon -->
-      <ImageView
-        android:id="@+id/img_edit_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:layout_marginEnd="@dimen/background_marginEnd"
-        android:src="@drawable/icon_edit_24" />
+    <!-- Delete text -->
+    <TextView
+      android:id="@+id/txt_delete"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_centerVertical="true"
+      android:layout_toRightOf="@+id/img_delete_icon"
+      android:text="@string/delete"
+      android:textSize="@dimen/background_textSize"
+      android:textColor="#FFFFFF" />
 
-      <!-- delete text -->
-      <TextView
-        android:id="@+id/txt_delete"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_toRightOf="@+id/img_delete_icon"
-        android:text="@string/delete"
-        android:textSize="@dimen/background_textSize"
-        android:textColor="#FFFFFF" />
+    <!-- Edit text -->
+    <TextView
+      android:id="@+id/txt_edit"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_centerVertical="true"
+      android:layout_marginEnd="4dp"
+      android:layout_toLeftOf="@+id/img_edit_icon"
+      android:text="@string/edit"
+      android:textSize="@dimen/background_textSize"
+      android:textColor="#FFFFFF" />
 
-      <!-- edit text -->
-      <TextView
-        android:id="@+id/txt_edit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_marginEnd="4dp"
-        android:layout_toLeftOf="@+id/img_edit_icon"
-        android:text="@string/edit"
-        android:textSize="@dimen/background_textSize"
-        android:textColor="#FFFFFF" />
+  </RelativeLayout>
 
-    </RelativeLayout>
+  <!-- Foreground layout is on top of background layout -->
+  <LinearLayout
+    android:id="@+id/foreground_layout"
+    android:tag="foreground_tag"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/foreground_layout_padding_top"
+    android:paddingBottom="@dimen/foreground_layout_padding_bottom"
+    android:paddingStart="@dimen/foreground_layout_padding_start"
+    android:background="@color/recyclerview_holder_color"
+    android:gravity="center_vertical">
 
-    <!-- foreground layout is on top of background layout -->
-    <LinearLayout
-      android:id="@+id/foreground_layout"
-      android:tag="foreground_tag"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:orientation="horizontal"
-      android:paddingTop="@dimen/foreground_layout_padding_top"
-      android:paddingBottom="@dimen/foreground_layout_padding_bottom"
-      android:paddingStart="@dimen/foreground_layout_padding_start"
-      android:background="@color/recyclerview_holder_color"
-      android:gravity="center_vertical">
+    <!-- List item name -->
+    <TextView
+      android:id="@+id/txt_item_name"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="@dimen/textView_layout_weight"
+      android:textSize="@dimen/recycler_item_name_textSize"
+      android:textColor="#000"/>
 
-      <!-- list item name -->
-      <TextView
-        android:id="@+id/txt_item_name"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="@dimen/textView_layout_weight"
-        android:textSize="@dimen/recycler_item_name_textSize"
-        android:textColor="#000"/>
+    <!-- List item checkbox -->
+    <CheckBox
+      android:id="@+id/checkBox"
+      android:theme="@style/checkBoxTheme"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="@dimen/checkBox_layout_weight"
+      android:scaleX="@dimen/check_box_scale_factor"
+      android:scaleY="@dimen/check_box_scale_factor"  />
+  </LinearLayout>
 
-      <!-- list item checkbox -->
-      <CheckBox
-        android:id="@+id/checkBox"
-        android:theme="@style/checkBoxTheme"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="@dimen/checkBox_layout_weight"
-        android:scaleX="@dimen/check_box_scale_factor"
-        android:scaleY="@dimen/check_box_scale_factor"  />
-    </LinearLayout>
-
-  </FrameLayout>
-<!--</androidx.cardview.widget.CardView>-->
+</FrameLayout>

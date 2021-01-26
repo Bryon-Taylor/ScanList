@@ -2,14 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto">
 
-  <!-- voice recognition -->
+  <!-- Voice recognition -->
   <item android:id="@+id/icon_voice_recognition"
     android:title="@string/voice_recognition"
     android:icon="@drawable/icon_mic_24"
     app:showAsAction="always">
   </item>
 
-  <!-- launch camera -->
+  <!-- Launch camera -->
   <item
     android:id="@+id/icon_launch_camera"
     android:title="@string/launch_camera"
@@ -17,7 +17,7 @@
     app:showAsAction="always">
   </item>
 
-  <!-- share list -->
+  <!-- Share list -->
   <item
     android:id="@+id/icon_share_list"
     android:title="@string/share_list"
@@ -25,7 +25,7 @@
     app:showAsAction="always" >
   </item>
 
-  <!-- delete all items -->
+  <!-- Delete all items -->
   <item
     android:id="@+id/icon_delete_all"
     android:title="@string/delete_all_items"
@@ -33,13 +33,12 @@
     app:showAsAction="ifRoom">
   </item>
 
-  <!-- delete checked items -->
+  <!-- Delete checked items -->
   <item
     android:id="@+id/icon_delete_checked"
     android:title="@string/delete_checked_items"
     android:icon="@drawable/icon_delete_24"
     app:showAsAction="ifRoom">
   </item>
-
 
 </menu>

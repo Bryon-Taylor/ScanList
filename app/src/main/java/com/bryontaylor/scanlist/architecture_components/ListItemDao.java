@@ -23,22 +23,21 @@ public interface ListItemDao {
   @Delete
   void delete(ListItem item);
 
-//  // get all Items
-//  @Query("SELECT * FROM list_item_table")
-//  LiveData<List<ListItem>> getAllItems();
-
-  // get all Items
+  // Get all items
   @Query("SELECT * FROM list_item_table ORDER BY positionInList ASC")
   LiveData<List<ListItem>> getAllItems();
 
-  // delete all items
+  // Delete all items
   @Query("DELETE FROM list_item_table")
   void deleteAllItems();
 
-  // delete all items whose checkbox is checked
+  // Delete all items whose checkbox is checked
   @Query("DELETE FROM list_item_table WHERE isChecked = 1")
   void deleteCheckedItems();
 
-  @Query("SELECT itemName FROM list_item_table")
+  // Get all item names for sharing a list
+  @Query("SELECT itemName FROM list_item_table ORDER BY positionInList ASC")
   List<String> getItemNames();
+
+
 }

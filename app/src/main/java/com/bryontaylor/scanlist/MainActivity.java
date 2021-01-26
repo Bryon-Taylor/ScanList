@@ -100,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private boolean wasSwiped;
   private ListItem movedItem;
   private static final float DRAG_ELEVATION = 60f;
+  private int fromPosition;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -154,15 +155,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     });
   }
 
-  // LiveData keeps the list current whenever a change in the local database occurs.
+  // LiveData keeps the list current whenever a change in the local database occurs
   private void setListObserver() {
     viewModel.getAllItems().observe(this, new Observer<List<ListItem>>() {
       @Override
       public void onChanged(List<ListItem> newList) {
-        adapterMain.submitList(newList); // Submit new list to ListAdapter
 
+        adapterMain.submitList(newList); // Updates the ListAdapter in RecyclerAdapterMain.java
         for(ListItem item: newList) {
-          Log.i(TAG, "onChanged: " + item.getItemName() + " " + item.getPositionInList());
+          Log.i(TAG, "onChanged: newList " + item.getItemName() + " " + item.getPositionInList());
         }
       }
     });
@@ -171,8 +172,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   // ItemTouchHelper class handles swipes & drags on the recycler view
   private void createItemTouchHelper() {
     new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
-        ItemTouchHelper.UP | ItemTouchHelper.DOWN, // Support up and down dragging
-        ItemTouchHelper.START | ItemTouchHelper.END) { // Support left and right swipes
+        ItemTouchHelper.UP | ItemTouchHelper.DOWN, // Support dragging
+        ItemTouchHelper.START | ItemTouchHelper.END) { // Support swiping
 
       private int originalTextColor; // To restore original text color after dragging
       private List<ListItem> currentList; // To track swapped items through drag and drop
@@ -187,8 +188,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           viewModel.delete(deletedItem); // Delete from database
           showUndoSnackBar(deletedItem); // Deleted item is passed in case user wants to undo
 
-        } else {
-          // Left swipes are to edit items
+        } else { // Left swipes are to edit items
+
+          // Shows the user a dialog with an EditText to modify the item
           showEditItemDialog(position);
         }
       }
@@ -217,9 +219,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .getColor(R.color.swipeColor, null));
 
           } else if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) { // If user drags
+
+            currentList = new ArrayList<>(adapterMain.getCurrentList()); // Used in onMove()
             wasDragged = true;
             movedItem = adapterMain.getItemAt(viewHolder.getAdapterPosition()); // Item being dragged
             recyclerLastIndex = recyclerMain.getChildCount() - 1; // Used in onChildDraw method
+
+            fromPosition = viewHolder.getAdapterPosition();
 
             // Change the background color to indicate it is being dragged
             foregroundLayout.setBackgroundColor(getResources()
@@ -264,11 +270,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           TextView textView = viewHolder.itemView.findViewById(R.id.txt_item_name);
           CheckBox checkBox = viewHolder.itemView.findViewById(R.id.checkBox);
 
-          if(checkBox.isChecked()) {
+          if(checkBox.isChecked()) { // Checked
             textView.setTextColor(Color.LTGRAY);
             checkBox.setButtonTintList(ColorStateList
                 .valueOf(getResources().getColor(R.color.checkedColor, null)));
-          } else {
+          } else { // Unchecked
             checkBox.setButtonTintList(ColorStateList
                 .valueOf(getResources().getColor(R.color.uncheckedColor, null)));
           }
@@ -383,6 +389,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           }
         } else if(actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
 
+          // To compare the viewHolder's index with the beginning and end of list indices
           int viewHolderIndex = viewHolder.getAdapterPosition();
 
           // Calling onChildDraw with dY = 0 will stop dragging outside recyclerView's bounds
@@ -391,7 +398,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 0, actionState, isCurrentlyActive); // dY == 0
           } else {
             super.onChildDraw(canvas, recyclerView, viewHolder, dX,
-                dY, actionState, isCurrentlyActive); // Normal dY value
+                dY, actionState, isCurrentlyActive); // Normal dY
           }
         }
       }
@@ -405,10 +412,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int fromPosition = source.getAdapterPosition();
         int toPosition = target.getAdapterPosition();
 
-        // Update position in the adapter
-        currentList = new ArrayList<>(adapterMain.getCurrentList());
+        // I was using this method previously. It works but is very inefficient. It's fine when
+        // dragging at a "reasonable" rate but if it's too fast, weird animations occur.
+        // currentList = new ArrayList<>(adapterMain.getCurrentList());
+        // Collections.swap(currentList, toPosition, fromPosition);
+        // adapterMain.submitList(currentList);
+
+        // Current code
         Collections.swap(currentList, toPosition, fromPosition);
-        adapterMain.submitList(currentList);
+        adapterMain.notifyItemMoved(fromPosition, toPosition);
         return true;
       }
     }).attachToRecyclerView(recyclerMain);
@@ -461,7 +473,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         .inflate(R.layout.custom_edit_alert_dialog, null);
     EditText edtItemInDialog = customAlertDialog.findViewById(R.id.edt_item_dialog);
     edtItemInDialog.setText(currentListItem.getItemName().trim()); // Show current value
-    edtItemInDialog.requestFocus();
+    edtItemInDialog.requestFocus(); // To have keyboard appear
     edtItemInDialog.setSelection(0); // Put the cursor at the beginning of the EditText
 
     // Create dialog to edit the list item
@@ -618,8 +630,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         e.printStackTrace();
       }
 
-      // Get the list of added items back from ScannedTextActivity. This list is the result of
-      //
+      // Get the list of added items back from ScannedTextActivity. This list contains all the items
+      // obtained from the scanned image that the user wants to add to the main list
     } else if (requestCode == REQUEST_CODE_SCANNED_LINES && resultCode == RESULT_OK) {
       List<ListItem> currentList = adapterMain.getCurrentList();
       double currentListPos;
@@ -654,7 +666,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         .start(this);
   }
 
-  // Detect text to add to list
+  // Detect text from an image to add to the list
   private void detectTextFromImage() {
     ArrayList<String> scannedLines = new ArrayList<>();
 
@@ -706,7 +718,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     List<String> itemNames = viewModel.getItemNames();
     String sharedItems = "";
     for (String name : itemNames) {
-      sharedItems += name + "\n"; // Creates a single string with new lines between items
+      sharedItems += name + "\n"; // Creates a single string with new lines between each list item
     }
     return sharedItems;
   }
@@ -720,6 +732,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
   }
 
+  // If the user grants permission to use the device's microphone, start the speech recognizer
   @Override
   public void onRequestPermissionsResult(int requestCode,
                                          @NonNull String[] permissions,
@@ -732,6 +745,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
   }
 
+  // Start listening for voice input
   @SuppressLint("ClickableViewAccessibility")
   private void startSpeechRecognizer() {
     Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);

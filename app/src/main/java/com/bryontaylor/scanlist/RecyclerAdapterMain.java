@@ -20,7 +20,7 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
   private CheckBoxListener checkBoxListener;
 
   public interface CheckBoxListener {
-    void onCheckBoxClicked(ListItem item);
+    void onCheckBoxClicked(ListItem item); // Method implemented in MainActivity
   }
 
   public void setCheckBoxListener(CheckBoxListener checkBoxListener) {

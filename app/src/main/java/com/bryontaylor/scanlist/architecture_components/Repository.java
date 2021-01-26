@@ -13,12 +13,9 @@ import java.util.concurrent.Future;
 
 public class Repository {
 
-  private ListItemDao listItemDao;
-  private List<String> itemNames;
-  private static final String TAG = "Repository";
-  //private long id;
+  private ListItemDao listItemDao; // Data Access Object interacts with the database
 
-  // for executing database operations on background thread
+  // For executing database operations on a background thread
   private ExecutorService executorSvc = ListItemDatabase.getExecutorSvc();
 
   public Repository(Application application) {
@@ -50,17 +47,12 @@ public class Repository {
     executorSvc.execute(() -> listItemDao.deleteCheckedItems());
   }
 
+  // Get a list of names for sharing e.g. via text or email
   public List<String> getItemNames() throws ExecutionException, InterruptedException {
 
+    // Use the Future class to ensure that the operation is completed before returning values
     Future<List<String>> future = executorSvc.submit(() -> listItemDao.getItemNames());
     List<String> itemNames = future.get();
     return itemNames;
-//    executorSvc.execute(new Runnable() {
-//      @Override
-//      public void run() {
-//        itemNames = listItemDao.getItemNames();
-//      }
-//    });
-//    return itemNames;
   }
 }

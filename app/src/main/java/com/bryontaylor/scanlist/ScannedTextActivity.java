@@ -59,7 +59,7 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
     btnAddAll.setOnClickListener(this);
     btnDone.setOnClickListener(this);
 
-    // Callback from RecyclerAdapterScannedText
+    // Callback from RecyclerAdapterScannedText.java
     scannedTextAdapter.setBtnAddListener(new RecyclerAdapterScannedText.OnAddBtnListener() {
       @Override
       public void addItemToList(String itemToAdd, int position) {
@@ -109,7 +109,6 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
         int position = viewHolder.getAdapterPosition();
         scannedLines.remove(position);
         scannedTextAdapter.notifyItemRemoved(position);
-
       }
 
       @Override

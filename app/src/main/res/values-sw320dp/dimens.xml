@@ -1,22 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-  <!-- MainActivity -->
+  <!-- <<<<<<<<<< MainActivity >>>>>>>>>> -->
 
-  <!-- Toolbar customizations -->
-  <dimen name="actionBarSize">38dp</dimen>
-
+  <!-- Add single items -->
   <dimen name="edt_add_item_textSize">16sp</dimen>
   <dimen name="imgView_width_height">34dp</dimen>
   <dimen name="border_weight">2dp</dimen>
   <dimen name="edt_add_item_padding">6dp</dimen>
+  <dimen name="edt_add_item_vertical_bias">0.00</dimen>
+  <dimen name="imgView_horizontal_bias">0.995</dimen>
 
-  <!-- RecyclerView elements -->
+  <!-- Recycler view -->
+  <dimen name="recycler_height">0dp</dimen>
+  <dimen name="recycler_margin_start">4dp</dimen>
+  <dimen name="recycler_margin_end">4dp</dimen>
+  <dimen name="recycler_vertical_bias">0.00</dimen>
+
+  <!-- Recycler view elements -->
   <dimen name="recycler_item_elevation">0dp</dimen>
   <dimen name="recycler_item_corner_radius">0dp</dimen>
   <dimen name="recycler_item_name_textSize">14sp</dimen>
 
-  <!-- foreground layout -->
+  <!-- Recycler row foreground layout -->
   <dimen name="foreground_layout_padding_start">4dp</dimen>
   <dimen name="foreground_layout_padding_top">1dp</dimen>
   <dimen name="foreground_layout_padding_bottom">0dp</dimen>
@@ -25,10 +31,25 @@
   <dimen name="checkBox_layout_weight">1.0</dimen>
   <dimen name="check_box_scale_factor">0.7</dimen>
 
-  <!-- background layout -->
+  <!-- Recycler row background layout -->
   <dimen name="background_marginStart">2dp</dimen>
   <dimen name="background_marginEnd">2dp</dimen>
-
   <dimen name="background_textSize">10sp</dimen>
+
+  <!-- EditText in Alert Dialog -->
+  <dimen name="editText_item_dialog_textSize">18sp</dimen>
+  <dimen name="textView_title_textSize">22sp</dimen>
+  <dimen name="editText_layout_margin">10dp</dimen>
+
+
+  <!-- <<<<<<<<<< ScannedTextActivity >>>>>>>>>> -->
+
+  <!-- Recycler view -->
+  <dimen name="recycler_margin_bottom">20dp</dimen>
+
+  <!-- Buttons -->
+  <dimen name="btn_vertical_bias">0.95</dimen>
+  <dimen name="left_button_horizontal_bias">0.25</dimen>
+  <dimen name="right_button_horizontal_bias">0.75</dimen>
 
 </resources>

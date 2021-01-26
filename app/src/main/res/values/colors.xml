@@ -20,7 +20,11 @@
   <color name="checkedColor">#4CAF50</color>
   <color name="viewDragColor">#FFF</color>
 
+  <color name="edit_add_item_textColor">#000</color>
+
   <color name="recyclerBackground">#F6FCFF</color>
+
+
 
   <!-- End MainActivity -->
 
@@ -30,5 +34,6 @@
   <!-- End ScannedTextActivity -->
 
   <color name="black">#000</color>
+  <color name="white">#FFF</color>
 
 </resources>

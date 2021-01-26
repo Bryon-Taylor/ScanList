@@ -12,8 +12,6 @@ public class ListItem {
 
   private String itemName;
   private boolean isChecked;
-
-  // testing
   private double positionInList;
 
   public long getId() {
@@ -40,7 +38,6 @@ public class ListItem {
     return isChecked;
   }
 
-  // testing
   public void setPositionInList(double positionInList) {
     this.positionInList = positionInList;
   }
@@ -51,8 +48,13 @@ public class ListItem {
 
   @Override
   public boolean equals(@Nullable Object obj) {
-    ListItem item = (ListItem) obj;
-    return this.itemName.equals(item.getItemName()) && this.isChecked == item.getIsChecked();
-  }
+    ListItem item = new ListItem();
+    if(obj instanceof ListItem) {
+       item = (ListItem) obj;
+    }
 
+    return this.getItemName().equals(item.getItemName()) &&
+        this.getIsChecked() == item.getIsChecked() &&
+        this.getPositionInList() == item.getPositionInList();
+  }
 }
