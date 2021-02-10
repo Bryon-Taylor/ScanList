@@ -102,7 +102,7 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
   // To support swipe to delete
   private void createItemTouchHelper() {
     new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
-        0, ItemTouchHelper.START | ItemTouchHelper.END) {
+        ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.START | ItemTouchHelper.END) {
 
       @Override
       public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
@@ -116,6 +116,7 @@ public class ScannedTextActivity extends AppCompatActivity implements View.OnCli
                             @NonNull RecyclerView.ViewHolder viewHolder,
                             @NonNull RecyclerView.ViewHolder target) {
         // Drag and drop not supported
+        scannedTextAdapter.notifyItemMoved(viewHolder.getAdapterPosition(), target.getAdapterPosition());
         return false;
       }
     }).attachToRecyclerView(recyclerView);

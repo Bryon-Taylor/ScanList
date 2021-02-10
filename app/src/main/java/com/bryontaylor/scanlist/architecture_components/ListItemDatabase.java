@@ -11,7 +11,7 @@ import com.bryontaylor.scanlist.ListItem;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Database(entities = ListItem.class, version = 1, exportSchema = false) // TODO: change this to true eventually
+@Database(entities = ListItem.class, version = 1, exportSchema = false)
 public abstract class ListItemDatabase extends RoomDatabase {
 
   private static ListItemDatabase instance;

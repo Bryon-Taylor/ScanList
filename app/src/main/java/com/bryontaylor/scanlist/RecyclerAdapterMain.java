@@ -14,6 +14,9 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMain.ListItemHolder> {
 
   // Registers MainActivity as a listener to checkbox clicks. Main will update database accordingly.
@@ -94,6 +97,14 @@ public class RecyclerAdapterMain extends ListAdapter<ListItem, RecyclerAdapterMa
 
   public ListItem getItemAt(int position) {
     return getItem(position);
+  }
+
+  public void onItemMoved(int fromPosition, int toPosition) {
+    List<ListItem> itemList = new ArrayList<>(getCurrentList());
+    ListItem fromItem = itemList.get(fromPosition);
+    itemList.remove(fromItem);
+    itemList.add(toPosition, fromItem);
+    submitList(itemList);
   }
 }
 

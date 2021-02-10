@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: "de.mannodermaus.android-junit5"
 
 // Google Text Recognition
 apply plugin: 'com.google.gms.google-services'
@@ -12,8 +13,6 @@ android {
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     // Java 8 support
@@ -33,6 +32,7 @@ android {
 dependencies {
 
     def room_version = "2.2.6"
+    def lifecycle_version = "2.2.0"
 
     implementation 'com.google.android.material:material:1.2.1'
     implementation fileTree(dir: "libs", include: ["*.jar"])
@@ -43,6 +43,11 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    // ViewModel
+    implementation "androidx.lifecycle:lifecycle-viewmodel:$lifecycle_version"
+    // LiveData
+    implementation "androidx.lifecycle:lifecycle-livedata:$lifecycle_version"
 
     // Room Persistence library
     implementation "androidx.room:room-runtime:$room_version"
@@ -62,8 +67,30 @@ dependencies {
 
     // this is the free version, above version requires credit card according to tutorial instructor
     // Coding Cafe - Android Text Recognition from Camera tutorial
-    //implementation 'com.google.firebase:firebase-ml-vision:15.0.0'
+    // implementation 'com.google.firebase:firebase-ml-vision:15.0.0'
     implementation 'com.google.firebase:firebase-core:15.0.2'
 
+    // LOCAL UNIT TESTS (use JUnit5)
+    // JUnit Jupiter
+    def junit_jupiter_version = "5.3.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_jupiter_version"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:$junit_jupiter_version"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_jupiter_version"
+
+    // INSTRUMENTATION TESTS (use JUnit4)
+    androidTestImplementation 'junit:junit:4.12'
+
+    // AndroidX test
+    def androidx_test_version = "1.1.0"
+    androidTestImplementation "androidx.test:core:$androidx_test_version"
+    androidTestImplementation "androidx.test:runner:$androidx_test_version"
+
+    // Architecture components testing
+    def androidx_arch_test_version = "2.0.1"
+    androidTestImplementation "androidx.arch.core:core-testing:$androidx_arch_test_version"
+
+    // MOCKITO (Unit tests)
+    def mockito_version = "2.19.0"
+    testImplementation "org.mockito:mockito-core:$mockito_version"
 }
 

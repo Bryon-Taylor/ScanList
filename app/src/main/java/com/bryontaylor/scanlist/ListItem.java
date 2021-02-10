@@ -14,6 +14,16 @@ public class ListItem {
   private boolean isChecked;
   private double positionInList;
 
+  public ListItem() { // Default constructor
+  }
+
+  // Constructor used for testing
+  public ListItem(String itemName, boolean isChecked, double positionInList) {
+    this.itemName = itemName;
+    this.isChecked = isChecked;
+    this.positionInList = positionInList;
+  }
+
   public long getId() {
     return id;
   }
@@ -53,8 +63,17 @@ public class ListItem {
        item = (ListItem) obj;
     }
 
+    // Compare the 3 fields. If all are identical then objects are equal
     return this.getItemName().equals(item.getItemName()) &&
         this.getIsChecked() == item.getIsChecked() &&
         this.getPositionInList() == item.getPositionInList();
+  }
+
+  @Override
+  public String toString() {
+    return "ListItem {" + "id = " + id + ", " +
+        "itemName = '" + itemName + '\'' + ", " +
+        "isChecked = " + isChecked + ", " +
+        "positionInList = " + positionInList + '}';
   }
 }

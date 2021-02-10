@@ -45,7 +45,7 @@
   <!-- <<<<<<<<<< ScannedTextActivity >>>>>>>>>> -->
 
   <!-- Recycler view -->
-  <dimen name="recycler_margin_bottom">20dp</dimen>
+  <dimen name="recycler_margin_bottom">28dp</dimen>
 
   <!-- Buttons -->
   <dimen name="btn_vertical_bias">0.95</dimen>

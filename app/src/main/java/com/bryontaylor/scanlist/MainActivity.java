@@ -3,6 +3,7 @@ package com.bryontaylor.scanlist;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -19,13 +20,13 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -80,7 +81,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private DividerItemDecoration recyclerDivider;
   private ListItemViewModel viewModel;
   private ConstraintLayout constraintLayout;
-  private static final String TAG = "MainActivity"; // TODO: delete
   private LinearLayoutManager layoutManager;
 
   // For image capture from camera
@@ -100,7 +100,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private boolean wasSwiped;
   private ListItem movedItem;
   private static final float DRAG_ELEVATION = 60f;
-  private int fromPosition;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -160,11 +159,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     viewModel.getAllItems().observe(this, new Observer<List<ListItem>>() {
       @Override
       public void onChanged(List<ListItem> newList) {
-
-        adapterMain.submitList(newList); // Updates the ListAdapter in RecyclerAdapterMain.java
-        for(ListItem item: newList) {
-          Log.i(TAG, "onChanged: newList " + item.getItemName() + " " + item.getPositionInList());
-        }
+        // Submits list to the ListAdapter
+        adapterMain.submitList(newList);
       }
     });
   }
@@ -186,12 +182,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (direction == ItemTouchHelper.END) {
           ListItem deletedItem = adapterMain.getItemAt(position);
           viewModel.delete(deletedItem); // Delete from database
-          showUndoSnackBar(deletedItem); // Deleted item is passed in case user wants to undo
+          showUndoSnackBar(deletedItem, position); // Show a snackBar to allow undo
 
         } else { // Left swipes are to edit items
 
           // Shows the user a dialog with an EditText to modify the item
           showEditItemDialog(position);
+          edtAddItem.clearFocus(); // So keyboard does not appear on returning to main screen
         }
       }
 
@@ -223,9 +220,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             currentList = new ArrayList<>(adapterMain.getCurrentList()); // Used in onMove()
             wasDragged = true;
             movedItem = adapterMain.getItemAt(viewHolder.getAdapterPosition()); // Item being dragged
-            recyclerLastIndex = recyclerMain.getChildCount() - 1; // Used in onChildDraw method
-
-            fromPosition = viewHolder.getAdapterPosition();
+            recyclerLastIndex = adapterMain.getItemCount() - 1; // Used in onChildDraw method
 
             // Change the background color to indicate it is being dragged
             foregroundLayout.setBackgroundColor(getResources()
@@ -268,6 +263,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if(wasSwiped) { // Restore text and checkbox colors after being swiped
           TextView textView = viewHolder.itemView.findViewById(R.id.txt_item_name);
+          textView.setTextColor(originalTextColor);
           CheckBox checkBox = viewHolder.itemView.findViewById(R.id.checkBox);
 
           if(checkBox.isChecked()) { // Checked
@@ -328,6 +324,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Reset flags
         wasSwiped = false;
         wasDragged = false;
+
       }
 
       // This will update the the moved item's positionInList variable in the database to persist
@@ -394,8 +391,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
           // Calling onChildDraw with dY = 0 will stop dragging outside recyclerView's bounds
           if((viewHolderIndex == recyclerLastIndex && dY > 0) || (viewHolderIndex == 0 && dY < 0)) {
-            super.onChildDraw(canvas, recyclerView, viewHolder, dX,
-                0, actionState, isCurrentlyActive); // dY == 0
+            super.onChildDraw(canvas, recyclerView, viewHolder, dX, 0, // dY == 0
+                actionState, isCurrentlyActive);
           } else {
             super.onChildDraw(canvas, recyclerView, viewHolder, dX,
                 dY, actionState, isCurrentlyActive); // Normal dY
@@ -412,21 +409,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int fromPosition = source.getAdapterPosition();
         int toPosition = target.getAdapterPosition();
 
-        // I was using this method previously. It works but is very inefficient. It's fine when
-        // dragging at a "reasonable" rate but if it's too fast, weird animations occur.
-        // currentList = new ArrayList<>(adapterMain.getCurrentList());
-        // Collections.swap(currentList, toPosition, fromPosition);
-        // adapterMain.submitList(currentList);
-
-        // Current code
         Collections.swap(currentList, toPosition, fromPosition);
-        adapterMain.notifyItemMoved(fromPosition, toPosition);
+        adapterMain.onItemMoved(fromPosition, toPosition);
         return true;
       }
     }).attachToRecyclerView(recyclerMain);
   }
 
-  // Inserts a new ListItem when MainActivity's EditText is used
+  // Inserts a new ListItem when tapping the add button and MainActivity's EditText has content
   public void onClick(@NonNull View v) {
     if (v.getId() == R.id.img_add_item_main) {
       String itemName = String.valueOf(edtAddItem.getText()); // Get user input
@@ -451,7 +441,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   // SnackBar to allow a user to undo a delete operation
-  public void showUndoSnackBar(ListItem deletedItem) {
+  public void showUndoSnackBar(ListItem deletedItem, int position) {
     Snackbar undoSnackBar = Snackbar.make(constraintLayout, R.string.undo_deleted_item,
         Snackbar.LENGTH_LONG).setAction(R.string.undo, new View.OnClickListener() {
       @Override
@@ -516,7 +506,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Enable positive button to be clicked after user makes changes
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
         if(s.length() == 0) {
-          // Disallow an empty entry to be added. Disable the positive button if EditText is empty
+          // Disable the positive button if EditText is empty. Prevents empty entries
           alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
         }
       }
@@ -560,9 +550,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       case R.id.icon_voice_recognition:
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) !=
             PackageManager.PERMISSION_GRANTED) {
-        requestPermission();
+          requestPermission();
       } else {
-        startSpeechRecognizer();
+          startSpeechRecognizer();
+          hideKeyboard(); // Voice input does not require the keyboard so hide it
       }
         break;
       default:
@@ -716,11 +707,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   // Create a single String from a list to share
   private String getItemsToShare() throws ExecutionException, InterruptedException {
     List<String> itemNames = viewModel.getItemNames();
-    String sharedItems = "";
+    StringBuilder sb = new StringBuilder();
     for (String name : itemNames) {
-      sharedItems += name + "\n"; // Creates a single string with new lines between each list item
+      sb.append(name).append("\n");
     }
-    return sharedItems;
+    return sb.toString();
   }
 
   // Request permission to access audio recording feature, required on versions >= Marshmallow
@@ -741,6 +732,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     if (requestCode == REQUEST_CODE_VOICE_RECOGNITION && grantResults.length > 0) {
       if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
         startSpeechRecognizer();
+        hideKeyboard();
       }
     }
   }
@@ -751,16 +743,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-    edtAddItem.setText(""); // TODO: string resources
+    edtAddItem.setText("");
     edtAddItem.setHint(R.string.speech_input_hint);
     speechRecognizer.startListening(intent);
     speechRecognizer.setRecognitionListener(new RecognitionListener() {
-
       @Override
       public void onResults(Bundle results) {
         String voiceResults = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).get(0);
+        if(voiceResults.isEmpty()) {
+          edtAddItem.setHint(R.string.add_item);
+        }
+
         // SpeechRecognizer converts the word "times" to "*" (multiplication symbol)
-        if(voiceResults.toLowerCase().contains("*")) {
+        if(voiceResults.contains("*")) {
           String[] splitResults = voiceResults.split("\\*"); // Use "*" as delimiter
           String quantity = splitResults[1].trim();
 
@@ -772,7 +767,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
       }
 
-      // Following 8 methods are unused
+      @Override
+      public void onError(int error) {
+        edtAddItem.setHint(R.string.add_item); // Restore hint to default if no speech detected
+      }
+
+      // Following 7 methods are unused
       @Override
       public void onReadyForSpeech(Bundle params) { }
 
@@ -789,14 +789,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
       public void onEndOfSpeech() { }
 
       @Override
-      public void onError(int error) { }
-
-      @Override
       public void onPartialResults(Bundle partialResults) { }
 
       @Override
       public void onEvent(int eventType, Bundle params) { }
     });
+  }
+
+  private void hideKeyboard() {
+    if(edtAddItem.hasFocus()) {
+      edtAddItem.clearFocus();
+      InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+      imm.toggleSoftInput(0, 0);
+    }
   }
 
   @Override

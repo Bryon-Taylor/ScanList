@@ -5,7 +5,8 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:4.0.1"
+        classpath "com.android.tools.build:gradle:4.0.2"
+        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.4.2.0"
 
         // Google Text Recognition
         classpath 'com.google.gms:google-services:4.3.3'
