@@ -711,6 +711,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     for (String name : itemNames) {
       sb.append(name).append("\n");
     }
+    sb.append("\n"); // Add a new line
     return sb.toString();
   }
 
@@ -732,7 +733,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     if (requestCode == REQUEST_CODE_VOICE_RECOGNITION && grantResults.length > 0) {
       if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
         startSpeechRecognizer();
-        hideKeyboard();
       }
     }
   }
@@ -800,8 +800,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     if(edtAddItem.hasFocus()) {
       edtAddItem.clearFocus();
       InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-      imm.toggleSoftInput(0, 0);
+      imm.hideSoftInputFromWindow(constraintLayout.getWindowToken(), 0);
     }
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    edtAddItem.clearFocus(); // so keyboard doesn't popup
   }
 
   @Override

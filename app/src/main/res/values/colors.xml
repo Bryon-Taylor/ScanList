@@ -7,7 +7,7 @@
   <!-- Begin MainActivity -->
   <color name="toolbarColor">#1976D2</color>
   <color name="hintTextColor">#BDBDBD</color>
-  <color name="swipeColor">#AA00FF</color>
+  <color name="swipeColor">#6D00A3</color>
   <color name="swipeTextColor">#FFF</color>
   <color name="swipeReleased">#FFF</color>
   <color name="borderColor">#D8D8D8</color>
