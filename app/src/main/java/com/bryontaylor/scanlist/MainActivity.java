@@ -182,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (direction == ItemTouchHelper.END) {
           ListItem deletedItem = adapterMain.getItemAt(position);
           viewModel.delete(deletedItem); // Delete from database
-          showUndoSnackBar(deletedItem, position); // Show a snackBar to allow undo
+          showUndoSnackBar(deletedItem); // Show a snackBar to allow undo
 
         } else { // Left swipes are to edit items
 
@@ -441,7 +441,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   // SnackBar to allow a user to undo a delete operation
-  private void showUndoSnackBar(ListItem deletedItem, int position) {
+  private void showUndoSnackBar(ListItem deletedItem) {
     Snackbar undoSnackBar = Snackbar.make(constraintLayout, R.string.undo_deleted_item,
         Snackbar.LENGTH_LONG).setAction(R.string.undo, new View.OnClickListener() {
       @Override
