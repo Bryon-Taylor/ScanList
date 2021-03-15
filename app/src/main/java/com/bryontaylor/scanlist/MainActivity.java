@@ -441,7 +441,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   // SnackBar to allow a user to undo a delete operation
-  public void showUndoSnackBar(ListItem deletedItem, int position) {
+  private void showUndoSnackBar(ListItem deletedItem, int position) {
     Snackbar undoSnackBar = Snackbar.make(constraintLayout, R.string.undo_deleted_item,
         Snackbar.LENGTH_LONG).setAction(R.string.undo, new View.OnClickListener() {
       @Override
@@ -562,7 +562,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   // Launches the phone's camera and stores the image in a temporary file in the phone's cache
-  public void launchCamera() {
+  private void launchCamera() {
     Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
     File photoFile = null;
 
